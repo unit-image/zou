@@ -501,15 +501,5 @@ def register_event_handlers(app):
 
 
 def configure_auth(app):
-    login_manager = LoginManager()
-    login_manager.init_app(app)
-
-    class AnonymousUser(AnonymousUserMixin):
-        def to_dict(self):
-            return {"anonynous": True}
-
-    login_manager.anonymous_user = AnonymousUser
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        return auth.load_user(user_id)
+    app.secret_key = app.config["SECRET_KEY"]
+    JWTManager(app)

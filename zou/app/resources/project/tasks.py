@@ -1,6 +1,6 @@
 from flask import abort, request
 from flask_restful import Resource, reqparse
-from flask_login import login_required, current_user
+from flask_jwt_extended import jwt_required
 
 from zou.app.models.task import Task
 from zou.app.models.task_status import TaskStatus
@@ -21,7 +21,7 @@ class CommentTaskResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def post(self, task_id):
         (
             task_status_id,
@@ -30,12 +30,12 @@ class CommentTaskResource(Resource):
 
         task = Task.get(task_id)
         task_status = TaskStatus.get(task_status_id)
-        person = Person.get(current_user.id)
+        person = Person.get(person_info.get_current_user().id)
         comment = Comment.create(
             object_id=task_id,
             object_type="Task",
             task_status_id=task_status_id,
-            person_id=current_user.id,
+            person_id=person_info.get_current_user().id,
             text=comment
         )
         task.update({"task_status_id": task_status_id})
@@ -66,12 +66,12 @@ class AddPreviewResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def post(self, task_id, comment_id):
         task = Task.get(task_id)
         comment = Comment.get(comment_id)
         task_status = TaskStatus.get(comment.task_status_id)
-        person = Person.get(current_user.id)
+        person = Person.get(person_info.get_current_user().id)
 
         if task_status.short_name != "wfa":
             return {"error": "Comment status is not waiting for approval."}, 400
@@ -94,7 +94,7 @@ class TaskPreviewsResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, task_id):
         try:
             task = task_info.get_task(task_id)
@@ -114,7 +114,7 @@ class TaskCommentsResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, task_id):
         try:
             comments = []
@@ -175,7 +175,7 @@ class CreateShotTasksResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def post(self, task_type_id):
         try:
             criterions = query.get_query_criterions_from_request(request)
@@ -194,7 +194,7 @@ class CreateAssetTasksResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def post(self, task_type_id):
         try:
             criterions = query.get_query_criterions_from_request(request)

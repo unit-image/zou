@@ -1,6 +1,6 @@
 from flask import request, abort
 from flask_restful import Resource, reqparse
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from zou.app.utils import query
 from zou.app.project import asset_info, task_info, project_info
@@ -35,7 +35,7 @@ class AllAssetsResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self):
         """
         Retrieve all entities that are not shot or sequence.
@@ -50,7 +50,7 @@ class AssetsAndTasksResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self):
         """
         Retrieve all entities that are not shot or sequence.
@@ -60,12 +60,73 @@ class AssetsAndTasksResource(Resource):
         return asset_info.all_assets_and_tasks(criterions)
 
 
+class AssetTypeResource(Resource):
+
+    def __init__(self):
+        Resource.__init__(self)
+
+    @jwt_required
+    def get(self, instance_id):
+        """
+        Retrieve given asset type.
+        """
+        try:
+            asset_type = asset_info.get_asset_type(instance_id)
+        except AssetTypeNotFoundException:
+            abort(404)
+        return asset_type.serialize(obj_type="AssetType")
+
+
+class AssetTypesResource(Resource):
+
+    def __init__(self):
+        Resource.__init__(self)
+
+    @jwt_required
+    def get(self):
+        """
+        Retrieve all asset types (entity types that are not shot, sequence or
+        episode).
+        """
+        criterions = query.get_query_criterions_from_request(request)
+        asset_types = asset_info.get_asset_types(criterions)
+        return EntityType.serialize_list(asset_types, obj_type="AssetType")
+
+
+class ProjectAssetTypesResource(Resource):
+
+    def __init__(self):
+        Resource.__init__(self)
+
+    @jwt_required
+    def get(self, project_id):
+        """
+        Retrieve all asset types for given project.
+        """
+        asset_types = asset_info.get_asset_types_for_project(project_id)
+        return Entity.serialize_list(asset_types, obj_type="AssetType")
+
+
+class ShotAssetTypesResource(Resource):
+
+    def __init__(self):
+        Resource.__init__(self)
+
+    @jwt_required
+    def get(self, shot_id):
+        """
+        Retrieve all asset shots for given soht.
+        """
+        asset_types = asset_info.get_asset_types_for_shot(shot_id)
+        return Entity.serialize_list(asset_types, obj_type="AssetType")
+
+
 class ProjectAssetsResource(Resource):
 
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, project_id):
         """
         Retrieve all assets for given project.
@@ -81,7 +142,7 @@ class ProjectAssetTypeAssetsResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, project_id, asset_type_id):
         """
         Retrieve all assets for given project and entity type.
@@ -98,7 +159,7 @@ class AssetTasksResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, instance_id):
         """
         Retrieve all tasks related to a given shot.
@@ -109,12 +170,29 @@ class AssetTasksResource(Resource):
             abort(404)
 
 
+class AssetTaskTypesResource(Resource):
+
+    def __init__(self):
+        Resource.__init__(self)
+
+    @jwt_required
+    def get(self, instance_id):
+        """
+        Retrieve all task types related to a given asset.
+        """
+        try:
+            asset = asset_info.get_asset(instance_id)
+            return task_info.get_task_types_for_asset(asset)
+        except AssetNotFoundException:
+            abort(404)
+
+
 class NewAssetResource(Resource):
 
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def post(self, project_id, asset_type_id):
         (
             name,
@@ -156,7 +234,7 @@ class NewAssetResource(Resource):
 
 class RemoveAssetResource(Resource):
 
-    @login_required
+    @jwt_required
     def delete(self, project_id, asset_type_id, asset_id):
         try:
             project = project_info.get_project(project_id)

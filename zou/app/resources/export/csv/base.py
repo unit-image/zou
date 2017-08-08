@@ -1,4 +1,4 @@
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from zou.app.resources.data.base import BaseModelResource
 from zou.app.utils import csv_utils
@@ -9,7 +9,7 @@ class BaseCsvExport(BaseModelResource):
     def __init__(self, model):
         BaseModelResource.__init__(self, model)
 
-    @login_required
+    @jwt_required
     def get(self):
         csv_content = []
         csv_content.append(self.build_headers())

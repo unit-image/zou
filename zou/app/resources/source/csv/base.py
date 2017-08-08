@@ -4,7 +4,7 @@ import csv
 
 from flask import request
 from flask_restful import Resource
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from zou.app import app
 from zou.app.utils import fields
@@ -15,7 +15,7 @@ class BaseCsvImportResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def post(self):
         uploaded_file = request.files["file"]
         file_name = "%s.csv" % uuid.uuid4()

@@ -1,5 +1,5 @@
 from flask import abort
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from zou.app.models.task import Task
 from zou.app.models.project import Project
@@ -21,7 +21,7 @@ class TaskFullResource(BaseModelResource):
     def __init__(self):
         BaseModelResource.__init__(self, Task)
 
-    @login_required
+    @jwt_required
     def get(self, instance_id):
         try:
             task = task_info.get_task(instance_id)

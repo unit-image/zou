@@ -12,7 +12,7 @@ class SequencesResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self):
         """
         Retrieve all sequence entries. Filters can be specified in the query
@@ -28,7 +28,7 @@ class SequenceShotsResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, instance_id):
         """
         Retrieve all shot entries for a given sequence.

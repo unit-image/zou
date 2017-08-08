@@ -1,6 +1,6 @@
 from flask import request
 from flask_restful import Resource, current_app
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from zou.app.utils import fields
 from zou.app.resources.source.shotgun.exception import ShotgunEntryImportFailed
@@ -13,7 +13,7 @@ class BaseImportShotgunResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def post(self):
         results = []
         self.sg_entries = request.json
@@ -57,7 +57,7 @@ class ImportRemoveShotgunBaseResource(Resource):
         self.model = model
         self.delete_func = delete_func
 
-    @login_required
+    @jwt_required
     def post(self):
         sg_model = request.json
         instance = self.model.get_by(shotgun_id=sg_model["id"])

@@ -4,7 +4,7 @@ import sqlalchemy.orm as orm
 
 from flask import request, abort
 from flask_restful import Resource, current_app
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from sqlalchemy.exc import IntegrityError, StatementError
 
@@ -110,7 +110,7 @@ class BaseModelResource(Resource):
             abort(404)
         return instance
 
-    @login_required
+    @jwt_required
     def get(self, instance_id):
         """
         Retrieve a model corresponding at given ID and return it as a JSON
@@ -122,7 +122,7 @@ class BaseModelResource(Resource):
             return {"error": "Wrong id format"}, 400
         return instance.serialize(), 200
 
-    @login_required
+    @jwt_required
     def put(self, instance_id):
         """
         Update a model with data given in the request body. JSON format is
@@ -150,8 +150,7 @@ class BaseModelResource(Resource):
             current_app.logger.error(str(exception))
             return {"error": str(exception)}, 400
 
-
-    @login_required
+    @jwt_required
     def delete(self, instance_id):
         """
         Delete a model corresponding at given ID and return it as a JSON

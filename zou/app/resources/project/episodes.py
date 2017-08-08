@@ -12,15 +12,15 @@ class EpisodesResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self):
         """
         Retrieve all episode entries. Filters can be specified in the query
         string.
         """
         criterions = query.get_query_criterions_from_request(request)
-        sequences = shot_info.get_sequences(criterions)
-        return Entity.serialize_list(sequences)
+        episodes = shot_info.get_episodes(criterions)
+        return Entity.serialize_list(episodes, obj_type="Episode")
 
 
 class EpisodeSequencesResource(Resource):
@@ -28,7 +28,7 @@ class EpisodeSequencesResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, instance_id):
         """
         Retrieve all sequence entries for a given episode.
@@ -37,4 +37,4 @@ class EpisodeSequencesResource(Resource):
         criterions = query.get_query_criterions_from_request(request)
         criterions["parent_id"] = instance_id
         sequences = shot_info.get_sequences(criterions)
-        return Entity.serialize_list(sequences)
+        return Entity.serialize_list(sequences, obj_type="Sequence")

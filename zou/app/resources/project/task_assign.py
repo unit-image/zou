@@ -1,16 +1,19 @@
 from flask import abort
 from flask_restful import reqparse, Resource
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from zou.app.project import task_info
 from zou.app.project import person_info
 
-from zou.app.project.exception import TaskNotFoundException, PersonNotFoundException
+from zou.app.project.exception import (
+    TaskNotFoundException,
+    PersonNotFoundException
+)
 
 
 class TaskAssignResource(Resource):
 
-    @login_required
+    @jwt_required
     def put(self, instance_id):
         (person_id) = self.get_arguments()
 

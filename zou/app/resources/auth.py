@@ -1,17 +1,27 @@
-from flask_restful import Resource, reqparse
-from flask_login import login_required, logout_user, login_user, current_user
-
+from flask_restful import Resource, reqparse, current_app
 from zou.app.project.exception import PersonNotFoundException
 
 from zou.app.utils import auth
 from zou.app.project import person_info
 
+from zou.app import app
+
+from flask_jwt_extended import (
+    jwt_required,
+    jwt_refresh_token_required,
+    create_access_token,
+    create_refresh_token,
+    revoke_token,
+    get_jwt_identity,
+    get_raw_jwt
+)
+
 
 class AuthenticatedResource(Resource):
 
-    @login_required
+    @jwt_required
     def get(self):
-        person = person_info.get_person(current_user.id)
+        person = person_info.get_by_email(get_jwt_identity())
         return {
             "authenticated": True,
             "user": person.serialize()
@@ -20,9 +30,16 @@ class AuthenticatedResource(Resource):
 
 class LogoutResource(Resource):
 
-    @login_required
+    @jwt_required
     def get(self):
-        logout_user()
+        try:
+            current_token = get_raw_jwt()
+            jti = current_token['jti']
+            revoke_token(jti)
+        except KeyError:
+            return {
+                "Access token not found."
+            }, 500
         return {
             "logout": True
         }
@@ -33,26 +50,31 @@ class LoginResource(Resource):
     def post(self):
         (email, password) = self.get_arguments()
         try:
-            auth.check_credentials(email, password)
-
-            user = auth.get_user_by_email(email)
-            login_user(user)
-
-            person = person_info.get_person(current_user.id)
+            strategy = app.config["AUTH_STRATEGY"]
+            if strategy == "auth_local_classic":
+                user = auth.local_auth_strategy(email, password)
+            elif strategy == "auth_local_no_password":
+                user = auth.no_password_auth_strategy(email)
+            elif strategy == "auth_remote_active_directory":
+                user = auth.active_directory_auth_strategy(email, password)
+            else:
+                raise auth.NoAuthStrategyConfigured
             return {
-                "login": True,
-                "user": person.serialize()
+                "user": user,
+                "access_token": create_access_token(identity=email),
+                "refresh_token": create_refresh_token(identity=email)
             }
         except PersonNotFoundException:
-            print("not registered")
-            return {
-                "login": False
-            }, 400
+            current_app.logger.info("User is not registered.")
+            return {"login": False}, 400
         except auth.WrongPasswordException:
-            print("wrong password")
-            return {
-                "login": False
-            }, 400
+            current_app.logger.info("User gave a wrong password.")
+            return {"login": False}, 400
+        except auth.NoAuthStrategyConfigured:
+            current_app.logger.info(
+                "Authentication strategy is not properly configured."
+            )
+            return {"login": False}, 400
 
     def get_arguments(self):
         parser = reqparse.RequestParser()
@@ -68,6 +90,16 @@ class LoginResource(Resource):
             args["email"],
             args["password"],
         )
+
+
+class RefreshTokenResource(Resource):
+
+    @jwt_refresh_token_required
+    def get(self):
+        email = get_jwt_identity()
+        return {
+            "access_token": create_access_token(identity=email)
+        }
 
 
 class RegistrationResource(Resource):
@@ -143,7 +175,7 @@ class RegistrationResource(Resource):
 
 class ChangePasswordResource(Resource):
 
-    @login_required
+    @jwt_required
     def post(self):
         (
             old_password,
@@ -152,10 +184,10 @@ class ChangePasswordResource(Resource):
         ) = self.get_arguments()
 
         try:
-            auth.check_credentials(current_user.email, old_password)
+            auth.check_credentials(get_jwt_identity(), old_password)
             auth.validate_password(password, password_2)
             password = auth.encrypt_password(password)
-            person_info.update_password(current_user, password)
+            person_info.update_password(get_jwt_identity(), password)
             return {"change_password_success": True}
 
         except auth.PasswordsNoMatchException:
@@ -198,3 +230,22 @@ class ChangePasswordResource(Resource):
             args["password"],
             args["password_2"]
         )
+
+
+class PersonListResource(Resource):
+    """
+    Resource used to list people available in the database without being logged.
+    It is used currently by some studios that rely on authentication without
+    password.
+    """
+
+    def get(self):
+        person_names = []
+        for person in person_info.all():
+            person_names.append({
+                "id": str(person.id),
+                "email": person.email,
+                "first_name": person.first_name,
+                "last_name": person.last_name
+            })
+        return person_names

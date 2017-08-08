@@ -1,6 +1,6 @@
 from flask import abort, request, send_from_directory
 from flask_restful import Resource
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from zou.app.project import (
     shot_info,
@@ -19,13 +19,12 @@ class BaseCreateThumbnailResource(Resource):
         self.data_type = data_type
         self.size = size
 
-    @login_required
+    @jwt_required
     def post(self, instance_id):
         if not self.is_exist(instance_id):
             abort(404)
 
         uploaded_file = request.files["file"]
-        print(self.size)
         thumbnail_utils.save_file(
             self.data_type,
             instance_id,
@@ -38,6 +37,7 @@ class BaseCreateThumbnailResource(Resource):
                 self.data_type,
                 instance_id
             )
+
         result = {"thumbnail_path": thumbnail_url_path}
 
         return result, 201
@@ -49,7 +49,7 @@ class BaseThumbnailResource(Resource):
         Resource.__init__(self)
         self.data_type = data_type
 
-    @login_required
+    @jwt_required
     def get(self, instance_id):
         if not self.is_exist(instance_id):
             abort(404)

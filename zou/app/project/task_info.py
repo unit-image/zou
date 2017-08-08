@@ -1,7 +1,5 @@
 import datetime
 
-from flask_login import current_user
-
 from sqlalchemy.exc import StatementError, IntegrityError
 
 from zou.app import app

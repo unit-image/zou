@@ -2,16 +2,22 @@ import os
 
 from flask import abort
 from flask_restful import reqparse, Resource
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from zou.app.models.working_file import WorkingFile
-from zou.app.models.task import Task
 
 from zou.app.resources.data.base import BaseModelResource
 
-from zou.app.project import file_info, task_info, file_tree
+from zou.app.project import file_info, task_info, person_info, file_tree
 
-from zou.app.project.exception import TaskNotFoundException
+from zou.app.project.exception import (
+    TaskNotFoundException,
+    OutputFileNotFoundException,
+    OutputTypeNotFoundException,
+    WorkingFileNotFoundException,
+    PersonNotFoundException,
+    MalformedFileTreeException
+)
 
 
 class CommentWorkingFileResource(BaseModelResource):
@@ -19,7 +25,7 @@ class CommentWorkingFileResource(BaseModelResource):
     def __init__(self):
         BaseModelResource.__init__(self, WorkingFile)
 
-    @login_required
+    @jwt_required
     def put(self, working_file_id):
         comment = self.get_comment_from_args()
         working_file = self.update_comment(working_file_id, comment)

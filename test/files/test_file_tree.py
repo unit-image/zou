@@ -6,6 +6,8 @@ from zou.app.models.entity import Entity
 
 from zou.app.project.exception import MalformedFileTreeException
 
+from zou.app.project import file_info
+
 
 class FileTreeTestCase(ApiDBTestCase):
 
@@ -16,6 +18,7 @@ class FileTreeTestCase(ApiDBTestCase):
         self.generate_fixture_project_standard()
         self.generate_fixture_entity_type()
         self.generate_fixture_entity()
+        self.generate_fixture_episode()
         self.generate_fixture_sequence()
         self.generate_fixture_shot()
         self.generate_fixture_sequence_standard()

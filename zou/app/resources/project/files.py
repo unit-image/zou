@@ -149,13 +149,17 @@ class FilePathResource(Resource):
             args["task_id"],
             args["version"],
             args["comment"],
+            args["software"],
+            args["output_type_id"],
+            args["scene"],
+            args["name"],
             args["sep"]
         )
 
 
 class SetTreeResource(Resource):
 
-    @login_required
+    @jwt_required
     def post(self, project_id):
         (tree_name) = self.get_arguments()
 
@@ -186,7 +190,7 @@ class SetTreeResource(Resource):
 
 class GetTaskFromPathResource(Resource):
 
-    @login_required
+    @jwt_required
     def post(self):
         (
             file_path,

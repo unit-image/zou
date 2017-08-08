@@ -2,11 +2,12 @@ import unittest
 import json
 import os
 import ntpath
+import shutil
 
 from mixer.backend.flask import mixer
 
 from zou.app import app
-from zou.app.utils import fields, auth
+from zou.app.utils import fields, auth, fs
 from zou.app.project import file_tree
 
 from zou.app.models.project import Project
@@ -14,6 +15,7 @@ from zou.app.models.person import Person
 from zou.app.models.department import Department
 from zou.app.models.working_file import WorkingFile
 from zou.app.models.output_file import OutputFile
+from zou.app.models.output_type import OutputType
 from zou.app.models.project_status import ProjectStatus
 from zou.app.models.entity import Entity
 from zou.app.models.entity_type import EntityType
@@ -37,12 +39,30 @@ class ApiTestCase(unittest.TestCase):
         })
         self.flask_app = app
         self.app = app.test_client()
+        self.base_headers = {}
+        self.post_headers = {"Content-type": "application/json"}
+        try:
+            shutil.rmtree(self.flask_app.config["JWT_TOKEN_FOLDER"])
+        except OSError:
+            pass
+        fs.mkdir_p(self.flask_app.config["JWT_TOKEN_FOLDER"])
+
+    def log_in(self, email):
+        tokens = self.post("auth/login", {
+            "email": email,
+            "password": "mypassword"
+        }, 200)
+        self.auth_headers = {
+            "Authorization": "Bearer %s" % tokens["access_token"]
+        }
+        self.base_headers.update(self.auth_headers)
+        self.post_headers.update(self.auth_headers)
 
     def get(self, path, code=200):
         """
         Get data provided at given path. Format depends on the path.
         """
-        response = self.app.get(path)
+        response = self.app.get(path, headers=self.base_headers)
         self.assertEqual(response.status_code, code)
         return json.loads(response.data.decode("utf-8"))
 
@@ -51,7 +71,7 @@ class ApiTestCase(unittest.TestCase):
         Get data provided at given path. Format depends on the path. Do not
         parse the json.
         """
-        response = self.app.get(path)
+        response = self.app.get(path, headers=self.base_headers)
         self.assertEqual(response.status_code, code)
         return response.data.decode("utf-8")
 
@@ -67,7 +87,7 @@ class ApiTestCase(unittest.TestCase):
         """
         Make sure that given path returns a 404 error for GET requests.
         """
-        response = self.app.get(path)
+        response = self.app.get(path, headers=self.base_headers)
         self.assertEqual(response.status_code, 404)
 
     def post(self, path, data, code=201):
@@ -76,9 +96,11 @@ class ApiTestCase(unittest.TestCase):
         format.
         """
         clean_data = fields.serialize_value(data)
-        response = self.app.post(path, data=json.dumps(clean_data), headers={
-            "Content-type": "application/json"
-        })
+        response = self.app.post(
+            path,
+            data=json.dumps(clean_data),
+            headers=self.post_headers
+        )
         self.assertEqual(response.status_code, code)
         return json.loads(response.data.decode("utf-8"))
 
@@ -86,9 +108,11 @@ class ApiTestCase(unittest.TestCase):
         """
         Make sure that given path returns a 404 error for POST requests.
         """
-        response = self.app.post(path, data=json.dumps(data), headers={
-            "Content-type": "application/json"
-        })
+        response = self.app.post(
+            path,
+            data=json.dumps(data),
+            headers=self.post_headers
+        )
         self.assertEqual(response.status_code, 404)
 
     def put(self, path, data, code=200):
@@ -96,9 +120,11 @@ class ApiTestCase(unittest.TestCase):
         Run a put request at given path while making sure it sends data at JSON
         format.
         """
-        response = self.app.put(path, data=json.dumps(data), headers={
-            "Content-type": "application/json"
-        })
+        response = self.app.put(
+            path,
+            data=json.dumps(data),
+            headers=self.post_headers
+        )
         self.assertEqual(response.status_code, code)
         return json.loads(response.data.decode("utf-8"))
 
@@ -106,16 +132,18 @@ class ApiTestCase(unittest.TestCase):
         """
         Make sure that given path returns a 404 error for PUT requests.
         """
-        response = self.app.put(path, data=json.dumps(data), headers={
-            "Content-type": "application/json"
-        })
+        response = self.app.put(
+            path,
+            data=json.dumps(data),
+            headers=self.post_headers
+        )
         self.assertEqual(response.status_code, 404)
 
     def delete(self, path, code=204):
         """
         Run a delete request at given path.
         """
-        response = self.app.delete(path)
+        response = self.app.delete(path, headers=self.base_headers)
         self.assertEqual(response.status_code, code)
         return response.data
 
@@ -123,7 +151,7 @@ class ApiTestCase(unittest.TestCase):
         """
         Make sure that given path returns a 404 error for DELETE requests.
         """
-        response = self.app.get(path)
+        response = self.app.get(path, headers=self.base_headers)
         self.assertEqual(response.status_code, 404)
 
     def upload_file(self, path, file_path, code=201):
@@ -132,9 +160,11 @@ class ApiTestCase(unittest.TestCase):
         """
         file_content = open(file_path, "rb")
         file_name = ntpath.basename(file_path)
-        response = self.app.post(path, data={
-            "file": (file_content, file_name)
-        })
+        response = self.app.post(
+            path,
+            data={"file": (file_content, file_name)},
+            headers=self.base_headers
+        )
         self.assertEqual(response.status_code, code)
         return response.data
 
@@ -143,14 +173,17 @@ class ApiTestCase(unittest.TestCase):
         Download a file located at given url path and save it at given file
         path.
         """
-        response = self.app.get(path)
+        response = self.app.get(path, headers=self.base_headers)
         self.assertEqual(response.status_code, code)
         file_descriptor = open(target_file_path, "wb")
         file_descriptor.write(response.data)
         return open(target_file_path, "rb").read()
 
     def tearDown(self):
-        pass
+        try:
+            shutil.rmtree(self.flask_app.config["JWT_TOKEN_FOLDER"])
+        except OSError:
+            pass
 
 
 class ApiDBTestCase(ApiTestCase):
@@ -164,14 +197,8 @@ class ApiDBTestCase(ApiTestCase):
         from zou.app.utils import dbhelpers
         dbhelpers.drop_all()
         dbhelpers.create_all()
-        self.log_in()
-
-    def log_in(self):
         self.generate_fixture_user()
-        self.post("auth/login", {
-            "email": self.user.email,
-            "password": "mypassword"
-        }, 200)
+        self.log_in(self.user.email)
 
     def tearDown(self):
         """
@@ -224,6 +251,16 @@ class ApiDBTestCase(ApiTestCase):
         self.project_standard.save()
         self.project_standard.update({
             "file_tree": file_tree.get_tree_from_file("standard")
+        })
+
+    def generate_fixture_project_no_preview_tree(self):
+        self.project_no_preview_tree = Project(
+            name="Agent 327",
+            project_status_id=self.open_status.id
+        )
+        self.project_no_preview_tree.save()
+        self.project_no_preview_tree.update({
+            "file_tree": file_tree.get_tree_from_file("no_preview")
         })
 
     def generate_fixture_entity(self):
@@ -430,7 +467,7 @@ class ApiDBTestCase(ApiTestCase):
 
     def generate_fixture_shot_task(self, name="Master"):
         self.shot_task = Task(
-            name="Master",
+            name=name,
             project_id=self.project.id,
             task_type_id=self.task_type_animation.id,
             task_status_id=self.task_status.id,
@@ -459,38 +496,46 @@ class ApiDBTestCase(ApiTestCase):
         )
         self.file_status.save()
 
-    def generate_fixture_working_file(self):
+    def generate_fixture_working_file(self, name="main", revision=1):
         self.working_file = WorkingFile(
-            name="S01_P01_modeling",
+            name=name,
             comment="",
-            revision=1,
+            revision=revision,
             task_id=self.task.id,
             entity_id=self.entity.id,
             person_id=self.person.id
         )
         self.working_file.save()
+        return self.working_file
 
     def generate_fixture_shot_working_file(self):
         self.working_file = WorkingFile(
-            name="S01_P01_animation",
+            name="main",
             comment="",
             revision=1,
-            task_id=self.task.id,
+            task_id=self.shot_task.id,
             entity_id=self.shot.id,
             person_id=self.person.id
         )
         self.working_file.save()
 
     def generate_fixture_output_file(self):
-        self.output_file = OutputFile(
+        self.output_file = OutputFile.create(
             comment="",
             revision=1,
             task_id=self.task.id,
             entity_id=self.entity.id,
             person_id=self.person.id,
-            file_status_id=self.file_status.id
+            file_status_id=self.file_status.id,
+            output_type_id=self.output_type.id
         )
-        self.output_file.save()
+        return self.output_file
+
+    def generate_fixture_output_type(self):
+        self.output_type = OutputType.create(
+            name="Geometry",
+            short_name="Geo"
+        )
 
     def get_fixture_file_path(self, relative_path):
         current_path = os.getcwd()

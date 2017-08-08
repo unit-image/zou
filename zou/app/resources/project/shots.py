@@ -1,6 +1,6 @@
 from flask import request, abort
 from flask_restful import Resource
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from zou.app.models.entity import Entity
 from zou.app.models.task import Task
@@ -50,7 +50,7 @@ class ShotAssetsResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, instance_id):
         """
         Retrieve all assets for a given shot.
@@ -68,7 +68,7 @@ class ShotTaskTypesResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, instance_id):
         """
         Retrieve all task types related to a given shot.
@@ -88,7 +88,7 @@ class ShotTasksResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, instance_id):
         """
         Retrieve all tasks related to a given shot.
@@ -122,7 +122,7 @@ class ProjectSequencesResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, project_id):
         """
         Retrieve all sequences related to a given project.
@@ -141,7 +141,7 @@ class ProjectEpisodesResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self, project_id):
         """
         Retrieve all episodes related to a given project.
