@@ -15,65 +15,99 @@ class BaseModelsResource(Resource):
         Resource.__init__(self)
         self.model = model
 
-    @login_required
+    def all_entries(self, query=None):
+        if query is None:
+            query = self.model.query
+
+        return self.model.serialize_list(query.all())
+
+    def paginated_entries(self, query, page):
+        total = query.count()
+        limit = current_app.config['NB_RECORDS_PER_PAGE']
+        offset = (page - 1) * limit
+
+        if (total < offset) or (page < 1):
+            abort(404)
+
+        nb_pages = int(math.ceil(total / float(limit)))
+        query = query.limit(limit)
+        query = query.offset(offset)
+
+        result = {
+            "data": self.all_entries(query),
+            "total": total,
+            "nb_pages": nb_pages,
+            "limit": limit,
+            "offset": offset,
+            "page": page
+        }
+        return result
+
+    def build_filters(self, options):
+        many_join_filter = []
+        in_filter = []
+        filters = {}
+
+        for key, value in options.items():
+            if key != "page":
+                field_key = getattr(self.model, key)
+                expr = field_key.property
+
+                is_many_to_many_field = isinstance(
+                    expr, orm.properties.RelationshipProperty
+                )
+                value_is_list = len(value) > 0 and value[0] == '['
+
+                if is_many_to_many_field:
+                    many_join_filter.append((key, value))
+
+                elif value_is_list:
+                    value_array = json.loads(value)
+                    in_filter.append(field_key.in_(value_array))
+
+                else:
+                    filters[key] = value
+
+        return (many_join_filter, in_filter, filters)
+
+    def apply_filters(self, query):
+        (
+            many_join_filter,
+            in_filter,
+            criterions
+        ) = self.build_filters(query)
+
+        query = self.model.query.filter_by(**criterions)
+
+        for id_filter in in_filter:
+            query = query.filter(id_filter)
+
+        for (key, value) in many_join_filter:
+            query = query.filter(getattr(self.model, key).any(id=value))
+
+        return query
+
+    @jwt_required
     def get(self):
         """
         Retrieve all entries for given model. Filters can be specified in the
         query string.
         """
+        query = self.model.query
         if not request.args:
-            return self.model.serialize_list(self.model.query.all())
+            return self.all_entries(query)
         else:
-            criterions = {}
-            manytomany = []
-            in_criterions = []
             options = request.args
+            query = self.apply_filters(options)
             page = int(options.get("page", "-1"))
+            is_paginated = page > -1
 
-            for key, value in options.items():
-                if key != "page":
-                    field_key = getattr(self.model, key)
-                    expr = field_key.property
-
-                    if isinstance(expr, orm.properties.RelationshipProperty):
-                        manytomany.append((key, value))
-                    elif len(value) > 0 and value[0] == '[':
-                        in_criterions.append(
-                            field_key.in_(json.loads(value))
-                        )
-                    else:
-                        criterions[key] = value
-            query = self.model.query.filter_by(**criterions)
-            for in_criterion in in_criterions:
-                query = query.filter(in_criterion)
-
-            for (key, value) in manytomany:
-                query = query.filter(getattr(self.model, key).any(id=value))
-
-            if page == -1:
-                return self.model.serialize_list(query.all())
+            if is_paginated:
+                return self.paginated_entries(query, page)
             else:
-                total = query.count()
-                limit = current_app.config['NB_RECORDS_PER_PAGE']
-                offset = (page - 1) * limit
+                return self.all_entries(query)
 
-                if (total < offset) or (page < 1):
-                    abort(404)
-
-                query = query.limit(limit)
-                query = query.offset(offset)
-
-                result = {
-                    "data": self.model.serialize_list(query.all()),
-                    "total": total,
-                    "nb_pages": int(math.ceil(total / float(limit))),
-                    "limit": limit,
-                    "offset": offset,
-                    "page": 2
-                }
-                return result
-
-    @login_required
+    @jwt_required
     def post(self):
         """
         Create a model with data given in the request body. JSON format is
@@ -134,8 +168,7 @@ class BaseModelResource(Resource):
             instance.update(request.json)
             return instance.serialize(), 200
 
-        except StatementError as exception:
-            current_app.logger.error(str(exception))
+        except StatementError:
             return {"error": "Wrong id format"}, 400
 
         except TypeError as exception:
