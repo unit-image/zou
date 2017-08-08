@@ -180,5 +180,4 @@ class PreviewFileThumbnailResource(BaseThumbnailResource):
         BaseThumbnailResource.__init__(self, "preview-files")
 
     def is_exist(self, preview_file_id):
-        print(preview_file_id)
         return file_info.get_preview_file(preview_file_id) is not None
