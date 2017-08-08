@@ -15,19 +15,36 @@ from zou.app.project.exception import (
 )
 
 
-class AssetTypesResource(Resource):
+class AssetResource(Resource):
 
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
+    def get(self, instance_id):
+        """
+        Retrieve given asset.
+        """
+        try:
+            asset = asset_info.get_asset(instance_id)
+        except AssetNotFoundException:
+            abort(404)
+        return asset.serialize(obj_type="Asset")
+
+
+class AssetsResource(Resource):
+
+    def __init__(self):
+        Resource.__init__(self)
+
+    @jwt_required
     def get(self):
         """
-        Retrieve all entity types that are not shot or sequence.
+        Retrieve all assets.
         """
         criterions = query.get_query_criterions_from_request(request)
-        asset_types = asset_info.get_asset_types(criterions)
-        return EntityType.serialize_list(asset_types)
+        assets = asset_info.get_assets(criterions)
+        return Entity.serialize_list(assets, obj_type="Asset")
 
 
 class AllAssetsResource(Resource):
@@ -134,7 +151,7 @@ class ProjectAssetsResource(Resource):
         criterions = query.get_query_criterions_from_request(request)
         criterions["project_id"] = project_id
         assets = asset_info.get_assets(criterions)
-        return Entity.serialize_list(assets)
+        return Entity.serialize_list(assets, obj_type="Asset")
 
 
 class ProjectAssetTypeAssetsResource(Resource):
@@ -151,7 +168,7 @@ class ProjectAssetTypeAssetsResource(Resource):
         criterions["project_id"] = project_id
         criterions["entity_type_id"] = asset_type_id
         assets = asset_info.get_assets(criterions)
-        return Entity.serialize_list(assets)
+        return Entity.serialize_list(assets, obj_type="Asset")
 
 
 class AssetTasksResource(Resource):
@@ -208,13 +225,12 @@ class NewAssetResource(Resource):
                 name,
                 description
             )
-
         except ProjectNotFoundException:
             abort(404)
         except AssetTypeNotFoundException:
             abort(404)
 
-        return asset.serialize(), 201
+        return asset.serialize(obj_type="Asset"), 201
 
     def get_arguments(self):
         parser = reqparse.RequestParser()

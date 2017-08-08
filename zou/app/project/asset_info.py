@@ -31,6 +31,33 @@ def get_asset_types(criterions={}):
     ).all()
 
 
+def get_asset_types_for_project(project_id):
+    asset_type_ids = [
+        x.entity_type_id for x in get_assets({"project_id": project_id})
+    ]
+
+    if len(asset_type_ids) > 0:
+        query = EntityType.query
+        query = query.filter(EntityType.id.in_(asset_type_ids))
+        result = query.all()
+    else:
+        result = []
+    return result
+
+
+def get_asset_types_for_shot(shot_id):
+    shot = Entity.get(shot_id)
+    asset_type_ids = [x.entity_type_id for x in shot.entities_out]
+
+    if len(asset_type_ids) > 0:
+        query = EntityType.query
+        query = query.filter(EntityType.id.in_(asset_type_ids))
+        result = query.all()
+    else:
+        result = []
+    return result
+
+
 def get_assets(criterions={}):
     shot_type = shot_info.get_shot_type()
     sequence_type = shot_info.get_sequence_type()
@@ -43,69 +70,6 @@ def get_assets(criterions={}):
             episode_type.id
         ])
     ).all()
-
-
-def all_assets(criterions={}):
-    shot_type = shot_info.get_shot_type()
-    sequence_type = shot_info.get_sequence_type()
-    episode_type = shot_info.get_episode_type()
-    query = Entity.query.filter_by(**criterions)
-    query = query.filter(
-        ~Entity.entity_type_id.in_([
-            shot_type.id,
-            sequence_type.id,
-            episode_type.id
-        ])
-    )
-    query = query.join(Project)
-    query = query.join(EntityType)
-    query = query.add_columns(Project.name)
-    query = query.add_columns(EntityType.name)
-
-    data = query.all()
-    assets = []
-    for (asset_model, project_name, asset_type_name) in data:
-        asset = asset_model.serialize()
-        asset["project_name"] = project_name
-        asset["asset_type_name"] = asset_type_name
-        assets.append(asset)
-
-    return assets
-
-
-def all_assets_and_tasks(criterions={}):
-    assets = all_assets(criterions)
-    asset_ids = [asset["id"] for asset in assets]
-    tasks = Task.query.filter(Entity.id.in_(asset_ids)).all()
-
-    task_map = {}
-    task_status_map = {
-        status.id: status for status in TaskStatus.query.all()
-    }
-    task_type_map = {
-        task_type.id: task_type for task_type in TaskType.query.all()
-    }
-
-    for task in tasks:
-        asset_id = str(task.entity_id)
-        if asset_id not in task_map:
-            task_map[asset_id] = []
-        task_dict = task.serialize()
-        task_status = task_status_map[task.task_status_id]
-        task_type = task_type_map[task.task_type_id]
-        task_dict.update({
-            "task_status_name": task_status.name,
-            "task_status_short_name": task_status.short_name,
-            "task_status_color": task_status.color,
-            "task_type_name": task_type.name,
-            "task_type_color": task_type.color
-        })
-        task_map[asset_id].append(task_dict)
-
-    for asset in assets:
-        asset["tasks"] = task_map.get(asset["id"], [])
-
-    return assets
 
 
 def get_asset(entity_id):
@@ -197,8 +161,8 @@ def create_asset(project, asset_type, name, description):
     )
     asset.save()
     events.emit("asset:new", {
-        "asset": asset.serialize(),
-        "asset_type": asset_type.serialize(),
+        "asset": asset.serialize(obj_type="Asset"),
+        "asset_type": asset_type.serialize(obj_type="Asset"),
         "project": project.serialize()
     })
     return asset
@@ -206,7 +170,7 @@ def create_asset(project, asset_type, name, description):
 
 def remove_asset(asset_id):
     asset = get_asset(asset_id)
-    deleted_asset = asset.serialize()
+    deleted_asset = asset.serialize(obj_type="Asset")
     asset.delete()
     events.emit("asset:deletion", {
         "deleted_asset": deleted_asset
@@ -219,8 +183,8 @@ def add_asset_link(asset_in, asset_out):
         asset_in.entities_out.append(asset_out)
         asset_in.save()
         events.emit("asset:new-link", {
-            "asset_in": asset_in.serialize(),
-            "asset_out": asset_out.serialize()
+            "asset_in": asset_in.serialize(obj_type="Asset"),
+            "asset_out": asset_out.serialize(obj_type="Asset")
         })
     return asset_in
 
@@ -231,7 +195,70 @@ def remove_asset_link(asset_in, asset_out):
             [x for x in asset_in.entities_out if x.id != asset_out]
         asset_in.save()
         events.emit("asset:remove-link", {
-            "asset_in": asset_in.serialize(),
-            "asset_out": asset_out.serialize()
+            "asset_in": asset_in.serialize(obj_type="Asset"),
+            "asset_out": asset_out.serialize(obj_type="Asset")
         })
     return asset_in
+
+
+def all_assets(criterions={}):
+    shot_type = shot_info.get_shot_type()
+    sequence_type = shot_info.get_sequence_type()
+    episode_type = shot_info.get_episode_type()
+    query = Entity.query.filter_by(**criterions)
+    query = query.filter(
+        ~Entity.entity_type_id.in_([
+            shot_type.id,
+            sequence_type.id,
+            episode_type.id
+        ])
+    )
+    query = query.join(Project)
+    query = query.join(EntityType)
+    query = query.add_columns(Project.name)
+    query = query.add_columns(EntityType.name)
+
+    data = query.all()
+    assets = []
+    for (asset_model, project_name, asset_type_name) in data:
+        asset = asset_model.serialize(obj_type="Asset")
+        asset["project_name"] = project_name
+        asset["asset_type_name"] = asset_type_name
+        assets.append(asset)
+
+    return assets
+
+
+def all_assets_and_tasks(criterions={}):
+    assets = all_assets(criterions)
+    asset_ids = [asset["id"] for asset in assets]
+    tasks = Task.query.filter(Entity.id.in_(asset_ids)).all()
+
+    task_map = {}
+    task_status_map = {
+        status.id: status for status in TaskStatus.query.all()
+    }
+    task_type_map = {
+        task_type.id: task_type for task_type in TaskType.query.all()
+    }
+
+    for task in tasks:
+        asset_id = str(task.entity_id)
+        if asset_id not in task_map:
+            task_map[asset_id] = []
+        task_dict = task.serialize()
+        task_status = task_status_map[task.task_status_id]
+        task_type = task_type_map[task.task_type_id]
+        task_dict.update({
+            "task_status_name": task_status.name,
+            "task_status_short_name": task_status.short_name,
+            "task_status_color": task_status.color,
+            "task_type_name": task_type.name,
+            "task_type_color": task_type.color
+        })
+        task_map[asset_id].append(task_dict)
+
+    for asset in assets:
+        asset["tasks"] = task_map.get(asset["id"], [])
+
+    return assets
