@@ -1,22 +1,29 @@
 import sys
 
 from flask_restful import Api, output_json
-from flask_login import LoginManager, AnonymousUserMixin
+from flask_jwt_extended import JWTManager
 
-from zou.app.utils import events, auth
+from zou.app.utils import events
 
 from .resources.index import IndexResource
 from .resources.project.assets import (
+    AssetTypeResource,
+    AssetTypesResource,
+    AssetResource,
+    AssetsResource,
     AllAssetsResource,
     AssetsAndTasksResource,
-    AssetTypesResource,
+    ProjectAssetTypesResource,
+    ShotAssetTypesResource,
     NewAssetResource,
     RemoveAssetResource,
     ProjectAssetsResource,
     ProjectAssetTypeAssetsResource,
-    AssetTasksResource
+    AssetTasksResource,
+    AssetTaskTypesResource,
 )
 from .resources.project.shots import (
+    ShotResource,
     ShotsResource,
     ShotsAndTasksResource,
     ShotAssetsResource,
@@ -27,10 +34,12 @@ from .resources.project.shots import (
     ProjectEpisodesResource
 )
 from .resources.project.episodes import (
+    EpisodeResource,
     EpisodesResource,
     EpisodeSequencesResource
 )
 from .resources.project.sequences import (
+    SequenceResource,
     SequencesResource,
     SequenceShotsResource
 )
@@ -58,7 +67,9 @@ from .resources.project.files import (
 from .resources.project.working_files import (
     CommentWorkingFileResource,
     PublishFileResource,
-    GetNextOutputFileResource
+    GetNextOutputFileResource,
+    NewWorkingFileResource,
+    LastWorkingFilesResource
 )
 from .resources.project.thumbnails import (
     CreateShotThumbnailResource,
@@ -140,6 +151,11 @@ from .resources.data.department import DepartmentsResource, DepartmentResource
 from .resources.data.task import TasksResource, TaskResource
 from .resources.data.file_status import FileStatusesResource, FileStatusResource
 from .resources.data.output_file import OutputFilesResource, OutputFileResource
+from .resources.data.output_type import OutputTypeResource, OutputTypesResource
+from .resources.data.software import (
+    SoftwaresResource,
+    SoftwareResource
+)
 from .resources.data.preview_file import (
     PreviewFilesResource,
     PreviewFileResource
@@ -164,7 +180,9 @@ from .resources.auth import (
     LogoutResource,
     AuthenticatedResource,
     ChangePasswordResource,
-    RegistrationResource
+    RegistrationResource,
+    RefreshTokenResource,
+    PersonListResource
 )
 
 
@@ -221,6 +239,9 @@ def configure_api_routes(api):
     api.add_resource(ShotsResource, "/data/shots/all")
     api.add_resource(SequencesResource, "/data/sequences")
     api.add_resource(EpisodesResource, "/data/episodes")
+    api.add_resource(ShotResource, "/data/shots/<instance_id>")
+    api.add_resource(SequenceResource, "/data/sequences/<instance_id>")
+    api.add_resource(EpisodeResource, "/data/episodes/<instance_id>")
     api.add_resource(
         SequenceShotsResource,
         "/data/sequences/<instance_id>/shots"
@@ -247,10 +268,18 @@ def configure_api_routes(api):
     )
 
     # Asset routes
-    api.add_resource(AssetTypesResource, "/data/asset_types")
+    api.add_resource(AssetTypesResource, "/data/asset-types")
+    api.add_resource(AssetTypeResource, "/data/asset-types/<instance_id>")
+    api.add_resource(AssetsResource, "/data/assets")
+    api.add_resource(AllAssetsResource, "/data/assets/all")
+    api.add_resource(AssetResource, "/data/assets/<instance_id>")
     api.add_resource(
-        AllAssetsResource,
-        "/data/assets/all"
+        ProjectAssetTypesResource,
+        "/data/projects/<project_id>/asset-types"
+    )
+    api.add_resource(
+        ShotAssetTypesResource,
+        "/data/shots/<shot_id>/asset-types"
     )
     api.add_resource(
         AssetTasksResource,
@@ -259,6 +288,10 @@ def configure_api_routes(api):
     api.add_resource(
         AssetsAndTasksResource,
         "/data/assets/with-tasks"
+    )
+    api.add_resource(
+        AssetTaskTypesResource,
+        "/data/assets/<instance_id>/task-types"
     )
 
     # Task routes
@@ -294,7 +327,7 @@ def configure_api_routes(api):
     )
     api.add_resource(
         ProjectAssetTypeAssetsResource,
-        "/data/projects/<project_id>/asset_types/<asset_type_id>/assets"
+        "/data/projects/<project_id>/asset-types/<asset_type_id>/assets"
     )
     api.add_resource(
         NewAssetResource,
@@ -317,6 +350,10 @@ def configure_api_routes(api):
         ProjectEpisodesResource,
         "/data/projects/<project_id>/episodes"
     )
+    api.add_resource(
+        NewWorkingFileResource,
+        "/data/tasks/<task_id>/working-files/new"
+    )
 
     # File routes
     api.add_resource(SetTreeResource, "/project/<project_id>/set-tree")
@@ -327,16 +364,20 @@ def configure_api_routes(api):
         "/project/files/working-files/<working_file_id>/comment"
     )
     api.add_resource(
-        PublishFileResource,
-        "/project/files/working-files/publish"
+        LastWorkingFilesResource,
+        "/project/tasks/<task_id>/last-working-files"
     )
     api.add_resource(
         GetTaskFromPathResource,
         "/project/tasks/from-path"
     )
     api.add_resource(
+        PublishFileResource,
+        "/project/tasks/<task_id>/working-files/<working_file_id>/publish"
+    )
+    api.add_resource(
         GetNextOutputFileResource,
-        "/project/tasks/<task_id>/output_files/next-revision"
+        "/project/tasks/<task_id>/output-types/<output_type_id>/next-revision"
     )
 
     # Thumbnail routes
@@ -476,8 +517,12 @@ def configure_api_routes(api):
     api.add_resource(DepartmentResource, "/data/departments/<instance_id>")
     api.add_resource(FileStatusesResource, "/data/file_status/")
     api.add_resource(FileStatusResource, "/data/file_status/<instance_id>")
+    api.add_resource(SoftwaresResource, "/data/softwares")
+    api.add_resource(SoftwareResource, "/data/softwares/<instance_id>")
     api.add_resource(OutputFilesResource, "/data/output_files")
     api.add_resource(OutputFileResource, "/data/output_files/<instance_id>")
+    api.add_resource(OutputTypesResource, "/data/output_types")
+    api.add_resource(OutputTypeResource, "/data/output_types/<instance_id>")
     api.add_resource(PreviewFilesResource, "/data/preview_files")
     api.add_resource(PreviewFileResource, "/data/preview_files/<instance_id>")
     api.add_resource(WorkingFilesResource, "/data/working_files")
@@ -485,11 +530,14 @@ def configure_api_routes(api):
     api.add_resource(CommentsResource, "/data/comments")
     api.add_resource(CommentResource, "/data/comments/<instance_id>")
 
+    # Authentication
     api.add_resource(LoginResource, "/auth/login")
     api.add_resource(LogoutResource, "/auth/logout")
     api.add_resource(AuthenticatedResource, "/auth/authenticated")
     api.add_resource(RegistrationResource, "/auth/register")
     api.add_resource(ChangePasswordResource, "/auth/change-password")
+    api.add_resource(RefreshTokenResource, "/auth/refresh-token")
+    api.add_resource(PersonListResource, "/auth/person-list")
 
     return api
 
