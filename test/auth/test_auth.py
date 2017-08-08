@@ -23,20 +23,6 @@ class AuthTestCase(ApiDBTestCase):
             "password": "secretpassword"
         }
 
-    def test_user_to_dict(self):
-        user = auth.User(
-            id=self.person.id,
-            email="john.doe@gmail.com",
-            first_name="John",
-            last_name="Doe"
-        )
-        self.assertEqual(user.to_dict(), {
-            "id": str(self.person.id),
-            "email": u"john.doe@gmail.com",
-            "first_name": u"John",
-            "last_name": u"Doe"
-        })
-
     def test_load_user(self):
         person = person_info.get_person(self.person.id)
         self.assertEqual(person.id, self.person.id)
