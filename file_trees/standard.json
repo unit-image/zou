@@ -1,44 +1,58 @@
 {
     "working": {
-        "mountpoint": "/simple",
-        "root": "productions",
+        "mountpoint": "U:",
+        "root": "PROD",
         "folder_path": {
-            "shot": "<Project>/shots/<Sequence>/<Shot>/<TaskType>",
-            "asset": "<Project>/assets/<AssetType>/<Asset>/<TaskType>",
-            "style": "lowercase"
+            "shot": "<Project>/02_FICHIERS_DE_TRAVAIL/04_Plans/<Sequence>/<Shot>/<Department>/<TaskType>/<Task>",
+            "asset": "<Project>/02_FICHIERS_DE_TRAVAIL/03_Assets/<AssetType>/<Asset>/<TaskType>/<Task>",
+            "style": "uppercase"
         },
         "file_name": {
-            "shot": "<Project>_<Sequence>_<Shot>_<TaskType>",
-            "asset": "<Project>_<AssetType>_<Asset>_<TaskType>",
-            "style": "lowercase"
+            "shot": "<Project>_<Sequence>_<Shot>_<Department>_<Task>",
+            "asset": "<Project>_<AssetType>_<Asset>_<Department>_<Task>",
+            "style": "uppercase"
         }
     },
     "output": {
-        "mountpoint": "/simple",
-        "root": "productions/export",
+        "mountpoint": "U:",
+        "root": "PROD",
         "folder_path": {
-            "shot": "<Project>/shots/<Sequence>/<Shot>/<TaskType>",
-            "asset": "<Project>/assets/<AssetType>/<Asset>/<TaskType>",
-            "style": "lowercase"
+            "shot": "<Project>/02_FICHIERS_DE_TRAVAIL/04_Plans/<Sequence>/<Shot>/<Department>/<TaskType>/<Task>/PUBLISH",
+            "asset": "<Project>/02_FICHIERS_DE_TRAVAIL/03_Assets/<AssetType>/<Asset>/<TaskType>/<Task>/PUBLISH",
+            "style": "uppercase"
         },
         "file_name": {
-            "shot": "<Project>_<Sequence>_<Shot>_<TaskType>",
-            "asset": "<Project>_<AssetType>_<Asset>_<TaskType>",
-            "style": "lowercase"
+            "shot": "<Project>_<Sequence>_<Shot>_<Department>_<Task>",
+            "asset": "<Project>_<AssetType>_<Asset>_<Department>_<Task>",
+            "style": "uppercase"
+        }
+    },
+    "cache": {
+        "mountpoint": "U:",
+        "root": "PROD",
+        "folder_path": {
+            "shot": "<Project>_CACHES/<Sequence>/<Shot>/<Department>/<TaskType>/<Task>",
+            "asset": "<Project>_CACHES/ASSETS/<AssetType>/<Asset>/<TaskType>/<Task>",
+            "style": "uppercase"
+        },
+        "file_name": {
+            "shot": "<Project>_<Sequence>_<Shot>_<Department>_<Task>",
+            "asset": "<Project>_<AssetType>_<Asset>_<Department>_<Task>",
+            "style": "uppercase"
         }
     },
     "preview": {
-        "mountpoint": "/simple",
-        "root": "productions/previews",
+        "mountpoint": "U:",
+        "root": "PROD",
         "folder_path": {
-            "shot": "<Project>/shots/<Sequence>/<Shot>/<TaskType>",
-            "asset": "<Project>/assets/<AssetType>/<Asset>/<TaskType>",
-            "style": "lowercase"
+            "shot": "<Project>/02_FICHIERS_DE_TRAVAIL/04_Plans/<Sequence>/<Shot>/<Department>/<TaskType>/<Task>/PUBLISH",
+            "asset": "<Project>/02_FICHIERS_DE_TRAVAIL/03_Assets/<AssetType>/<Asset>/<TaskType>/<Task>/PUBLISH",
+            "style": "uppercase"
         },
         "file_name": {
-            "shot": "<Project>_<Sequence>_<Shot>_<TaskType>",
-            "asset": "<Project>_<AssetType>_<Asset>_<TaskType>",
-            "style": "lowercase"
+            "shot": "<Project>_<Sequence>_<Shot>_<Department>_<Task>",
+            "asset": "<Project>_<AssetType>_<Asset>_<Department>_<Task>",
+            "style": "uppercase"
         }
     }
 }
