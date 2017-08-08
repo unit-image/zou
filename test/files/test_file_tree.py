@@ -50,6 +50,7 @@ class FileTreeTestCase(ApiDBTestCase):
             parent_id=self.sequence_standard.id
         )
         self.shot_standard.save()
+        self.output_type_cache = file_info.get_or_create_output_type("Cache")
 
     def test_get_tree_from_file(self):
         simple_tree = file_tree.get_tree_from_file("simple")
@@ -70,30 +71,10 @@ class FileTreeTestCase(ApiDBTestCase):
         path = file_tree.get_root_path(tree, "working", "/")
         self.assertEqual(path, "/simple/productions/")
 
-    def test_get_file_name_root_standard(self):
-        tree = file_tree.get_tree_from_file("standard")
-        file_name = file_tree.get_file_name_root(
-            tree,
-            "working",
-            self.shot,
-            self.shot_task
-        )
-        self.assertEqual(
-            file_name,
-            "cosmos_landromat_s01_p01_animation"
-        )
-
     def test_add_version_suffix_to_file_name(self):
         file_name = "COSMOS_LANDROMAT_S01_P01"
         file_name = file_tree.add_version_suffix_to_file_name(file_name, 3)
         self.assertEqual(file_name, "COSMOS_LANDROMAT_S01_P01_v003")
-
-    def test_add_comment_suffix_to_file_name(self):
-        file_name = "COSMOS_LANDROMAT_S01_P01"
-        file_name = file_tree.add_comment_suffix_to_file_name(
-            file_name, "comment"
-        )
-        self.assertEqual(file_name, "COSMOS_LANDROMAT_S01_P01_comment")
 
     def test_get_project(self):
         project = file_tree.get_project(self.entity)
@@ -153,6 +134,14 @@ class FileTreeTestCase(ApiDBTestCase):
         )
         self.assertEquals(path, self.sequence.name)
 
+    def test_get_folder_from_datatype_episode(self):
+        path = file_tree.get_folder_from_datatype(
+            "Episode",
+            self.shot,
+            self.task
+        )
+        self.assertEquals(path, "E01")
+
     def test_get_folder_from_datatype_asset(self):
         path = file_tree.get_folder_from_datatype(
             "Asset",
@@ -193,6 +182,24 @@ class FileTreeTestCase(ApiDBTestCase):
         )
         self.assertEquals(path, self.task_type.name)
 
+    def test_get_folder_from_datatype_software(self):
+        path = file_tree.get_folder_from_datatype(
+            "Software",
+            self.entity,
+            self.task,
+            software="maya"
+        )
+        self.assertEquals(path, "maya")
+
+    def test_get_folder_from_datatype_output_type(self):
+        path = file_tree.get_folder_from_datatype(
+            "OutputType",
+            self.entity,
+            self.task,
+            output_type=self.output_type_cache
+        )
+        self.assertEquals(path, "cache")
+
     def test_get_folder_raise_exception(self):
         self.assertRaises(
             MalformedFileTreeException,
@@ -209,28 +216,45 @@ class FileTreeTestCase(ApiDBTestCase):
         )
         self.assertEquals(
             path,
-            "/simple/productions/cosmos_landromat/shots/s01/p01/animation"
+            "/simple/productions/cosmos_landromat/shots/s01/p01/animation/"
+            "3dsmax"
         )
 
     def test_get_folder_path_with_separator(self):
         path = file_tree.get_folder_path(
             self.shot_task,
             mode="working",
+            sep="\\"
+        )
+        self.assertEquals(
+            path,
+            "/simple\\productions\\cosmos_landromat\\shots\\s01\\p01\\"
+            "animation\\3dsmax"
+        )
+
+    def test_get_folder_path_with_outputtype(self):
+        path = file_tree.get_folder_path(
+            self.shot_task,
+            mode="output",
+            output_type=self.output_type_cache,
             sep="/"
         )
         self.assertEquals(
             path,
-            "/simple/productions/cosmos_landromat/shots/s01/p01/animation"
+            "/simple/productions/export/cosmos_landromat/shots/s01/p01/"
+            "animation/cache"
         )
 
     def test_get_folder_path_asset(self):
         path = file_tree.get_folder_path(
             self.task,
-            mode="working"
+            mode="working",
+            software="maya"
         )
         self.assertEquals(
             path,
-            "/simple/productions/cosmos_landromat/assets/props/tree/shaders"
+            "/simple/productions/cosmos_landromat/assets/props/tree/shaders/"
+            "maya"
         )
 
     def test_get_file_name_asset(self):
@@ -240,6 +264,17 @@ class FileTreeTestCase(ApiDBTestCase):
             version=3
         )
         self.assertEquals(file_name, "cosmos_landromat_props_tree_shaders_v003")
+
+    def test_get_file_name_output_asset(self):
+        file_name = file_tree.get_file_name(
+            self.task,
+            mode="output",
+            version=3
+        )
+        self.assertEquals(
+            file_name,
+            "cosmos_landromat_props_tree_shaders_geometry_v003"
+        )
 
     def test_get_file_name_shot(self):
         file_name = file_tree.get_file_name(
@@ -252,24 +287,14 @@ class FileTreeTestCase(ApiDBTestCase):
     def test_get_file_path_asset(self):
         file_name = file_tree.get_file_path(
             self.task,
+            software="maya",
             version=3
         )
         self.assertEquals(
             file_name,
             "/simple/productions/cosmos_landromat/assets/props/tree/shaders/"
+            "maya/"
             "cosmos_landromat_props_tree_shaders_v003"
-        )
-
-    def test_get_file_name_comment(self):
-        file_name = file_tree.get_file_name(
-            self.task,
-            mode="working",
-            version=3,
-            comment="My comment"
-        )
-        self.assertEquals(
-            file_name,
-            "cosmos_landromat_props_tree_shaders_v003_my_comment"
         )
 
     def test_change_folder_path_separators(self):

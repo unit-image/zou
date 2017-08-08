@@ -1,11 +1,17 @@
 from flask import request, abort
 from flask_restful import Resource, reqparse
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
-from zou.app.project import file_tree, project_info, task_info
+from zou.app.project import (
+    file_tree,
+    project_info,
+    task_info,
+    file_info
+)
 from zou.app.project.exception import (
-    SequenceNotFoundException,
+    OutputFileNotFoundException,
     ProjectNotFoundException,
+    SequenceNotFoundException,
     TaskNotFoundException,
     WrongFileTreeFileException,
     WrongPathFormatException,
@@ -18,19 +24,28 @@ class FolderPathResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def post(self):
         (
             mode,
             task_id,
+            software,
+            output_type_id,
+            scene,
+            name,
             separator
         ) = self.get_arguments()
 
         try:
             task = task_info.get_task(task_id)
+            output_type = file_info.get_output_type(output_type_id)
             path = file_tree.get_folder_path(
                 task,
                 mode=mode,
+                software=software,
+                output_type=output_type,
+                scene=scene,
+                name=name,
                 sep=separator
             )
 
@@ -45,6 +60,12 @@ class FolderPathResource(Resource):
                 "error": "Sequence for shot linked to task not found.",
                 "received_data": request.json,
                 "path": None
+            }, 400
+
+        except OutputFileNotFoundException:
+            return {
+                "error": "Given output type does not exist.",
+                "received_data": request.json,
             }, 400
 
         except MalformedFileTreeException:
@@ -68,13 +89,22 @@ class FolderPathResource(Resource):
             help="The task file id is required.",
             required=True
         )
+        geometry_type = file_info.get_or_create_output_type("geometry")
         parser.add_argument("sep", default="/")
+        parser.add_argument("software", default="3dsmax")
+        parser.add_argument("output_type_id", default=geometry_type.id)
+        parser.add_argument("scene", default=1)
+        parser.add_argument("name", default="name")
         args = parser.parse_args()
 
         return (
             args["mode"],
             args["task_id"],
-            args["sep"]
+            args["software"],
+            args["output_type_id"],
+            args["scene"],
+            args["name"],
+            args["sep"],
         )
 
 
@@ -83,28 +113,44 @@ class FilePathResource(Resource):
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def post(self):
         (
             mode,
             task_id,
             version,
             comment,
+            software,
+            output_type_id,
+            scene,
+            name,
             separator
         ) = self.get_arguments()
 
         try:
             task = task_info.get_task(task_id)
+            output_type = file_info.get_output_type(output_type_id)
+            is_version_set_by_user = version == 0
+            if is_version_set_by_user and mode == "working":
+                version = self.get_next_version(task_id, name)
+
             file_path = file_tree.get_folder_path(
                 task,
                 mode=mode,
+                software=software,
+                output_type=output_type,
+                scene=scene,
+                name=name,
                 sep=separator
             )
             file_name = file_tree.get_file_name(
                 task,
                 mode=mode,
                 version=version,
-                comment=comment
+                software=software,
+                output_type=output_type,
+                scene=scene,
+                name=name
             )
         except TaskNotFoundException:
             return {
@@ -125,7 +171,23 @@ class FilePathResource(Resource):
                 "received_data": request.json,
             }, 400
 
+        except OutputFileNotFoundException:
+            return {
+                "error": "Given output type does not exist.",
+                "received_data": request.json,
+            }, 400
+
         return {"path": file_path, "name": file_name}, 200
+
+    def get_next_version(self, task_id, name):
+        last_working_files = \
+            file_info.get_last_working_files_for_task(task_id)
+        working_file = last_working_files.get(name, None)
+        if working_file is not None:
+            version = working_file["revision"] + 1
+        else:
+            version = 1
+        return version
 
     def get_arguments(self):
         parser = reqparse.RequestParser()
@@ -139,8 +201,13 @@ class FilePathResource(Resource):
             help="The task file id is required (working, output,...).",
             required=True
         )
+        geometry_type = file_info.get_or_create_output_type("geometry")
         parser.add_argument("comment", default="")
-        parser.add_argument("version", default=1)
+        parser.add_argument("version", default=0)
+        parser.add_argument("software", default="3dsmax")
+        parser.add_argument("output_type_id", default=geometry_type.id)
+        parser.add_argument("scene", default=1)
+        parser.add_argument("name", default="")
         parser.add_argument("sep", default="/")
         args = parser.parse_args()
 
@@ -210,10 +277,18 @@ class GetTaskFromPathResource(Resource):
         try:
             if path_type == "shot":
                 task = file_tree.get_shot_task_from_path(
-                    file_path, project, mode, sep)
+                    file_path,
+                    project,
+                    mode,
+                    sep
+                )
             else:
                 task = file_tree.get_asset_task_from_path(
-                    file_path, project, mode, sep)
+                    file_path,
+                    project,
+                    mode,
+                    sep
+                )
 
         except WrongPathFormatException:
             return {

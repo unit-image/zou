@@ -25,7 +25,8 @@ class GetTaskFromPathTestCase(ApiDBTestCase):
 
     def test_get_shot_task_from_path(self):
         data = {
-            "file_path": "/simple/productions/the_crew/shots/s01/p01/animation",
+            "file_path":
+                "/simple/productions/the_crew/shots/s01/p01/animation/3dsmax",
             "project_id": self.project.id,
             "type": "shot"
         }
@@ -35,7 +36,7 @@ class GetTaskFromPathTestCase(ApiDBTestCase):
         )
 
     def test_get_asset_task_from_path(self):
-        path = "/simple/productions/the_crew/assets/props/tree/shaders"
+        path = "/simple/productions/the_crew/assets/props/tree/shaders/3dsmax"
         data = {
             "file_path": path,
             "project_id": self.project.id,

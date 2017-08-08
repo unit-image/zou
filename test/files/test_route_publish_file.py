@@ -2,6 +2,8 @@ from test.base import ApiDBTestCase
 
 from zou.app.utils import events
 
+from zou.app.project import file_info
+
 
 class PublishFileTestCase(ApiDBTestCase):
 
@@ -24,81 +26,116 @@ class PublishFileTestCase(ApiDBTestCase):
         self.generate_fixture_shot_task()
         self.generate_fixture_working_file()
         self.generate_fixture_shot_working_file()
+        self.tx_type_id = str(
+            file_info.get_or_create_output_type("tx").id
+        )
+        self.cache_type_id = str(
+            file_info.get_or_create_output_type("Cache").id
+        )
+        self.person_id = self.person.id
+        self.working_file_id = str(self.working_file.id)
 
         events.unregister_all()
 
+    def publish(self, publish_data, code=201):
+        path = "project/tasks/%s/working-files/%s/publish" % (
+            self.task.id,
+            self.working_file_id
+        )
+        result = self.post(
+            path,
+            publish_data,
+            code
+        )
+        return result
+
     def test_publish(self):
         publish_data = {
-            "task_id": self.task.id,
-            "person_id": self.person.id,
+            "person_id": self.person_id,
             "comment": "test working file publish",
-            "working_file_revision": 15
+            "output_type_id": self.tx_type_id
         }
-        result = self.post(
-            "project/files/working-files/publish",
-            publish_data
-        )
+        result = self.publish(publish_data)
 
         self.assertEqual(
-            result["output_file"]["folder_path"],
-            "/simple/productions/export/cosmos_landromat/assets/props/tree/shaders"
+            result["folder_path"],
+            "/simple/productions/export/cosmos_landromat/assets/props/tree/"
+            "shaders/tx"
         )
         self.assertEqual(
-            result["output_file"]["file_name"],
-            "cosmos_landromat_props_tree_shaders_v001_test_working_file_publish"
+            result["file_name"],
+            "cosmos_landromat_props_tree_shaders_tx_v001"
         )
 
-        output_file_id = result["output_file"]["id"]
+        output_file_id = result["id"]
         output_file = self.get("data/output_files/%s" % output_file_id)
 
         self.assertEqual(output_file["comment"], publish_data["comment"])
         self.assertEqual(output_file["revision"], 1)
+        self.assertEqual(output_file["source_file_id"], self.working_file_id)
 
         self.assertEqual(
-            result["working_file"]["folder_path"],
-            "/simple/productions/cosmos_landromat/assets/props/tree/shaders"
+            result["preview_path"]["folder_path"],
+            "/simple/productions/previews/cosmos_landromat/assets/props/tree/"
+            "shaders"
         )
         self.assertEqual(
-            result["working_file"]["file_name"],
-            "cosmos_landromat_props_tree_shaders_v015_test_working_file_publish"
+            result["preview_path"]["file_name"],
+            "cosmos_landromat_props_tree_shaders_v001"
         )
 
-        working_file_id = result["working_file"]["id"]
-        working_file = self.get("data/working_files/%s" % working_file_id)
-
-        self.assertEqual(working_file["revision"], 15)
+    def test_publish_no_preview(self):
+        self.generate_fixture_project_no_preview_tree()
+        self.entity.update({"project_id": self.project_no_preview_tree.id})
+        self.task.update({"project_id": self.project_no_preview_tree.id})
+        publish_data = {
+            "task_id": self.task.id,
+            "person_id": self.person.id,
+            "comment": "test working file publish",
+            "output_type_id": self.tx_type_id
+        }
+        result = self.publish(publish_data)
 
         self.assertEqual(
-            output_file["source_file_id"],
-            working_file["id"]
+            result["folder_path"],
+            "/simple/productions/export/agent_327/assets/props/tree/"
+            "shaders/tx"
         )
+        self.assertEqual(
+            result["file_name"],
+            "agent_327_props_tree_shaders_tx_v001"
+        )
+        self.assertEqual(len(result["preview_path"]["folder_path"]), 0)
+        self.assertEqual(len(result["preview_path"]["file_name"]), 0)
 
     def test_publish_wrong_data(self):
         publish_data = {
             "comment_wrong": "test file publish"
         }
-        self.post(
-            "project/files/working-files/publish",
-            publish_data,
-            400
-        )
+        self.publish(publish_data, 400)
 
     def test_publish_new_revision(self):
         publish_data = {
             "task_id": self.task.id,
             "person_id": self.person.id,
+            "working_file_id": self.working_file_id,
             "comment": "test working file publish"
         }
-        self.post("project/files/working-files/publish", publish_data)
-        result = self.post(
-            "project/files/working-files/publish",
+
+        self.post(
+            "project/tasks/%s/working-files/%s/publish" % (
+                self.task.id,
+                self.working_file_id
+            ),
             publish_data
         )
-        working_file_id = result["working_file"]["id"]
-        output_file_id = result["output_file"]["id"]
-
-        working_file = self.get("data/working_files/%s" % working_file_id)
-        self.assertEqual(working_file["revision"], 3)
-
+        result = self.post(
+            "project/tasks/%s/working-files/%s/publish" % (
+                self.task.id,
+                self.working_file_id
+            ),
+            publish_data
+        )
+        output_file_id = result["id"]
         output_file = self.get("data/output_files/%s" % output_file_id)
         self.assertEqual(output_file["revision"], 2)
