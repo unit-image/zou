@@ -15,34 +15,35 @@ from zou.app.project.exception import (
 )
 
 
+class ShotResource(Resource):
+
+    def __init__(self):
+        Resource.__init__(self)
+
+    @jwt_required
+    def get(self, instance_id):
+        """
+        Retrieve given shot.
+        """
+        try:
+            shot = shot_info.get_shot(instance_id)
+        except ShotNotFoundException:
+            abort(404)
+        return shot.serialize(obj_type="Shot")
+
+
 class ShotsResource(Resource):
 
     def __init__(self):
         Resource.__init__(self)
 
-    @login_required
+    @jwt_required
     def get(self):
         """
         Retrieve all shot entries. Filters can be specified in the query string.
         """
         criterions = query.get_query_criterions_from_request(request)
-        shots = shot_info.get_shots(criterions)
-        return shots
-
-
-class ShotsAndTasksResource(Resource):
-
-    def __init__(self):
-        Resource.__init__(self)
-
-    @login_required
-    def get(self):
-        """
-        Retrieve all shots, adds project name and asset type name and all
-        related tasks.
-        """
-        criterions = query.get_query_criterions_from_request(request)
-        return shot_info.get_shots_and_tasks(criterions)
+        return shot_info.get_shots(criterions)
 
 
 class ShotAssetsResource(Resource):
@@ -60,7 +61,7 @@ class ShotAssetsResource(Resource):
         except ShotNotFoundException:
             abort(404)
 
-        return Entity.serialize_list(shot.entities_out)
+        return Entity.serialize_list(shot.entities_out, obj_type="Asset")
 
 
 class ShotTaskTypesResource(Resource):
@@ -99,11 +100,27 @@ class ShotTasksResource(Resource):
             abort(404)
 
 
+class ShotsAndTasksResource(Resource):
+
+    def __init__(self):
+        Resource.__init__(self)
+
+    @jwt_required
+    def get(self):
+        """
+        Retrieve all shots, adds project name and asset type name and all
+        related tasks.
+        """
+        criterions = query.get_query_criterions_from_request(request)
+        return shot_info.get_shots_and_tasks(criterions)
+
+
 class ProjectShotsResource(Resource):
 
     def __init__(self):
         Resource.__init__(self)
 
+    @jwt_required
     def get(self, project_id):
         """
         Retrieve all shots related to a given project.
@@ -111,7 +128,8 @@ class ProjectShotsResource(Resource):
         try:
             project = project_info.get_project(project_id)
             return Entity.serialize_list(
-                shot_info.get_shots_for_project(project)
+                shot_info.get_shots_for_project(project),
+                obj_type="Shot"
             )
         except ProjectNotFoundException:
             abort(404)
@@ -130,7 +148,8 @@ class ProjectSequencesResource(Resource):
         try:
             project = project_info.get_project(project_id)
             return Entity.serialize_list(
-                shot_info.get_sequences_for_project(project)
+                shot_info.get_sequences_for_project(project),
+                obj_type="Sequence"
             )
         except ProjectNotFoundException:
             abort(404)
@@ -149,7 +168,8 @@ class ProjectEpisodesResource(Resource):
         try:
             project = project_info.get_project(project_id)
             return Entity.serialize_list(
-                shot_info.get_episodes_for_project(project)
+                shot_info.get_episodes_for_project(project),
+                obj_type="Episode"
             )
         except ProjectNotFoundException:
             abort(404)

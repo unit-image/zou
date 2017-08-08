@@ -43,5 +43,3 @@ class TaskAssignResource(Resource):
         task = task_info.get_task(task_id)
         person = person_info.get_person(person_id)
         return task_info.assign_task(task, person)
-
-

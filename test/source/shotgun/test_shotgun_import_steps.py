@@ -76,7 +76,7 @@ class ImportShotgunStepTestCase(ShotgunTestCase):
         self.assertEqual(department["color"], "#3295fd")
 
         task_type = task_types[0]
-        self.assertEqual(task_type["name"], "Shaders")
+        self.assertEqual(task_type["name"], "Modeling Shaders")
 
     def test_import_step_twice(self):
         sg_step_animation = {

@@ -48,5 +48,6 @@ class TaskFullResource(BaseModelResource):
         for assignee in task.assignees:
             assignees.append(assignee.serialize())
         result["persons"] = assignees
+        result["type"] = "Task"
 
         return result, 200

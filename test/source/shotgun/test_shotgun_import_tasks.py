@@ -83,7 +83,7 @@ class ImportShotgunTaskTestCase(ShotgunTestCase):
         task = self.tasks[0]
         project = Project.get_by(name=self.sg_task["project"]["name"])
         task_type = \
-            TaskType.get_by(name=self.sg_task["step"]["name"].split(" ")[1])
+            TaskType.get_by(name=self.sg_task["step"]["name"])
         task_status = TaskStatus.get_by(
             short_name=self.sg_task["sg_status_list"])
         assets = asset_info.get_assets(

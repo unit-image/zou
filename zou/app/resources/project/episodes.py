@@ -1,10 +1,28 @@
-from flask import request
+from flask import request, abort
 from flask_restful import Resource
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 
 from zou.app.utils import query
 from zou.app.project import shot_info
 from zou.app.models.entity import Entity
+from zou.app.project.exception import EpisodeNotFoundException
+
+
+class EpisodeResource(Resource):
+
+    def __init__(self):
+        Resource.__init__(self)
+
+    @jwt_required
+    def get(self, instance_id):
+        """
+        Retrieve given episode.
+        """
+        try:
+            episode = shot_info.get_episode(instance_id)
+        except EpisodeNotFoundException:
+            abort(404)
+        return episode.serialize(obj_type="Episode")
 
 
 class EpisodesResource(Resource):

@@ -12,7 +12,12 @@ from zou.app.project.exception import (
     TaskNotFoundException,
     TaskTypeNotFoundException
 )
-from zou.app.project import task_info, shot_info, asset_info
+from zou.app.project import (
+    task_info,
+    shot_info,
+    asset_info,
+    person_info
+)
 from zou.app.utils import query
 
 
@@ -154,6 +159,13 @@ class TaskCommentsResource(Resource):
                     "color": task_status_color,
                     "id": str(comment.task_status_id)
                 }
+
+                if comment.preview_file_id is not None:
+                    preview = PreviewFile.get(comment.preview_file_id)
+                    comment_dict["preview"] = {
+                        "id": str(preview.id),
+                        "revision": preview.revision
+                    }
 
                 if comment.preview_file_id is not None:
                     preview = PreviewFile.get(comment.preview_file_id)

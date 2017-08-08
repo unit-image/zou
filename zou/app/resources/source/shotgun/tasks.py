@@ -47,12 +47,9 @@ class ImportShotgunTasksResource(BaseImportShotgunResource):
         task_status_id = self.task_status_ids.get(
             sg_task["sg_status_list"], None
         )
+        step_name = sg_task["step"]["name"]
         assigner_id = self.person_ids.get(sg_task["created_by"]["id"], None)
         project_id = self.project_ids.get(sg_task["project"]["id"], None)
-        step_name = sg_task["step"]["name"]
-        if len(step_name.split(" ")) > 1:
-            step_name = " ".join(step_name.split(" ")[1:])
-
         task_type_id = self.task_type_ids.get(step_name, None)
         assignees = self.extract_assignees(sg_task, self.person_ids)
 

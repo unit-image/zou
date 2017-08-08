@@ -32,9 +32,6 @@ class ImportShotgunStepsResource(BaseImportShotgunResource):
     def extract_department_name(self, sg_step):
         splitted_name = sg_step["code"].split(" ")
         department_name = splitted_name[0]
-        if (len(splitted_name) > 1):
-            sg_step["code"] = " ".join(splitted_name[1:])
-
         return department_name
 
     def import_entry(self, data):
@@ -76,4 +73,4 @@ class ImportShotgunStepsResource(BaseImportShotgunResource):
 class ImportRemoveShotgunStepResource(ImportRemoveShotgunBaseResource):
 
     def __init__(self):
-        ImportRemoveShotgunBaseResource.__init__(self, Department)
+        ImportRemoveShotgunBaseResource.__init__(self, TaskType)

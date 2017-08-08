@@ -23,12 +23,25 @@ from zou.app.project.exception import (
 from zou.app.project import shot_info, asset_info, person_info
 
 
+def get_task_types_for_asset(asset):
+    tasks = Task.query.filter_by(entity_id=asset.id).all()
+
+    task_types = []
+    if len(tasks) > 0:
+        task_type_ids = [task.task_type_id for task in tasks]
+        task_types = TaskType.query.filter(
+            TaskType.id.in_(task_type_ids)
+        )
+
+    return TaskType.serialize_list(task_types)
+
+
 def get_wip_status():
-    return get_or_create_status(app.config["WIP_TASK_STATUS"], "WIP")
+    return get_or_create_status(app.config["WIP_TASK_STATUS"], "wip")
 
 
 def get_to_review_status():
-    return get_or_create_status(app.config["TO_REVIEW_TASK_STATUS"], "WFA")
+    return get_or_create_status(app.config["TO_REVIEW_TASK_STATUS"], "pndng")
 
 
 def get_todo_status():
@@ -134,6 +147,7 @@ def create_task(task_type, entity, name="main"):
         pass  # Tasks already exists, no need to create it.
 
 
+
 def delete_task(task):
     task.delete()
 
@@ -201,7 +215,6 @@ def get_task_dicts_for_entity(entity_id):
         task["entity_type_name"] = entity_type_name
         task["entity_name"] = entity_name
         results.append(task)
-
     return results
 
 
