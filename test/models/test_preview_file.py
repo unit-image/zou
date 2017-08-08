@@ -22,6 +22,7 @@ class PreviewFileTestCase(ApiDBTestCase):
         self.generate_fixture_assigner()
         self.generate_fixture_task()
         self.generate_fixture_file_status()
+        self.generate_fixture_output_type()
         self.generate_fixture_output_file()
         self.generate_data(
             PreviewFile,

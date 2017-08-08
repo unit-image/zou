@@ -21,6 +21,18 @@ class AssetInfoTestCase(ApiDBTestCase):
         self.assertEqual(len(asset_types), 1)
         self.assertEqual(asset_types[0].name, "Props")
 
+    def test_get_asset_types_for_project(self):
+        asset_types = asset_info.get_asset_types_for_project(self.project.id)
+        self.assertEqual(len(asset_types), 1)
+        self.assertEqual(asset_types[0].name, "Props")
+
+    def test_get_asset_types_for_shot(self):
+        self.shot.entities_out = [self.entity]
+        self.shot.save()
+        asset_types = asset_info.get_asset_types_for_shot(self.shot.id)
+        self.assertEqual(len(asset_types), 1)
+        self.assertEqual(asset_types[0].name, "Props")
+
     def test_get_assets(self):
         assets = asset_info.get_assets()
         self.assertEqual(len(assets), 1)
