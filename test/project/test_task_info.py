@@ -45,6 +45,7 @@ class TaskInfoTestCase(ApiDBTestCase):
         self.generate_fixture_shot_task()
         self.generate_fixture_file_status()
         self.generate_fixture_working_file()
+        self.generate_fixture_output_type()
         self.generate_fixture_output_file()
 
         self.task_id = self.task.id
@@ -77,13 +78,24 @@ class TaskInfoTestCase(ApiDBTestCase):
         task_status = task_info.get_wip_status()
         self.assertEqual(task_status.name, "WIP")
 
+    def test_get_todo_status(self):
+        task_status = task_info.get_todo_status()
+        self.assertEqual(task_status.name, "Todo")
+
     def test_get_to_review_status(self):
         task_status = task_info.get_to_review_status()
         self.assertEqual(task_status.name, "To review")
 
-    def test_get_todo_status(self):
-        task_status = task_info.get_todo_status()
-        self.assertEqual(task_status.name, "Todo")
+    def test_create_task(self):
+        shot = self.shot.serialize()
+        task_type = self.task_type.serialize()
+        status = task_info.get_todo_status().serialize()
+        task = task_info.create_task(task_type, shot)
+        task = task_info.get_task(task["id"]).serialize()
+        self.assertEquals(task["entity_id"], shot["id"])
+        self.assertEquals(task["task_type_id"], task_type["id"])
+        self.assertEquals(task["project_id"], shot["project_id"])
+        self.assertEquals(task["task_status_id"], status["id"])
 
     def test_status_to_wip(self):
         events.register(
@@ -158,7 +170,7 @@ class TaskInfoTestCase(ApiDBTestCase):
             str(self.person.id)
         )
 
-        self.assertTrue(
+        self.assertEquals(
             data["task_after"]["output_file"]["id"],
             str(self.output_file.id)
         )
@@ -170,17 +182,6 @@ class TaskInfoTestCase(ApiDBTestCase):
     def test_get_department_from_task_type(self):
         department = task_info.get_department_from_task_type(self.task_type)
         self.assertEqual(department.name, "Modeling")
-
-    def test_create_task(self):
-        shot = self.shot.serialize()
-        task_type = self.task_type.serialize()
-        status = task_info.get_todo_status().serialize()
-        task = task_info.create_task(task_type, shot)
-        task = task_info.get_task(task["id"]).serialize()
-        self.assertEquals(task["entity_id"], shot["id"])
-        self.assertEquals(task["task_type_id"], task_type["id"])
-        self.assertEquals(task["project_id"], shot["project_id"])
-        self.assertEquals(task["task_status_id"], status["id"])
 
     def test_get_task(self):
         self.assertRaises(
