@@ -27,8 +27,10 @@ class FileInfoTestCase(ApiDBTestCase):
         self.generate_fixture_person()
         self.generate_fixture_assigner()
         self.generate_fixture_task()
+        self.generate_fixture_shot_task()
         self.generate_fixture_file_status()
         self.generate_fixture_working_file()
+        self.generate_fixture_output_type()
         self.generate_fixture_output_file()
 
     def test_get_default_status(self):
@@ -53,61 +55,102 @@ class FileInfoTestCase(ApiDBTestCase):
             "unknown"
         )
 
+    def test_get_working_files_for_task(self):
+        self.generate_fixture_working_file(name="main", revision=2)
+        self.generate_fixture_working_file(name="main", revision=3)
+        self.generate_fixture_working_file(name="main", revision=4)
+        self.generate_fixture_working_file(name="main", revision=5)
+        working_files = file_info.get_working_files_for_task(self.task.id)
+        self.assertEquals(len(working_files), 5)
+        self.assertEquals(working_files[0]["revision"], 5)
+
+    def test_get_last_working_files_for_task(self):
+        self.generate_fixture_working_file(name="main", revision=2)
+        self.generate_fixture_working_file(name="main", revision=3)
+        self.generate_fixture_working_file(name="main", revision=4)
+        self.generate_fixture_working_file(name="main", revision=5)
+        self.generate_fixture_working_file(name="hotfix", revision=1)
+        self.generate_fixture_working_file(name="hotfix", revision=2)
+        self.generate_fixture_working_file(name="hotfix", revision=3)
+        working_files = file_info.get_last_working_files_for_task(self.task.id)
+        self.assertEquals(working_files["main"]["revision"], 5)
+        self.assertEquals(working_files["hotfix"]["revision"], 3)
+
+    def get_next_working_revision(self):
+        self.generate_fixture_working_file(name="main", revision=2)
+        self.generate_fixture_working_file(name="main", revision=3)
+        self.generate_fixture_working_file(name="main", revision=4)
+        self.generate_fixture_working_file(name="main", revision=5)
+        revision = file_info.get_next_working_revision(self.task.id, "main")
+        self.assertEquals(revision)
+
     def test_create_new_working_revision(self):
         self.working_file.delete()
         working_file = file_info.create_new_working_revision(
-            self.entity.id,
             self.task.id,
             self.person.id,
-            "comment"
+            "main",
+            "/path"
         )
-        self.assertEqual(working_file.revision, 1)
+        self.assertEqual(working_file["revision"], 1)
+        working_files = file_info.get_working_files_for_task(self.task.id)
         working_file = file_info.create_new_working_revision(
+            self.task.id,
+            self.person.id,
+            "main",
+            "/path"
+        )
+        working_files = file_info.get_working_files_for_task(self.task.id)
+        self.assertEqual(working_file["revision"], 2)
+        self.assertEquals(len(working_files), 2)
+
+    def test_get_last_output_revision(self):
+        output_file = file_info.create_new_output_revision(
             self.entity.id,
             self.task.id,
+            self.working_file.id,
+            self.output_type.id,
             self.person.id,
             "comment"
         )
-        self.assertEqual(working_file.revision, 2)
+        output_file = file_info.create_new_output_revision(
+            self.entity.id,
+            self.task.id,
+            self.working_file.id,
+            self.output_type.id,
+            self.person.id,
+            "comment"
+        )
+        self.assertEqual(output_file.revision, 3)
+
+    def test_get_next_output_file_revision(self):
+        revision = file_info.get_next_output_file_revision(
+            self.task.id,
+            self.output_type.id
+        )
+
+        self.assertEqual(revision, 2)
 
     def test_create_new_output_revision(self):
         self.output_file.delete()
         output_file = file_info.create_new_output_revision(
             self.entity.id,
             self.task.id,
-            self.person.id,
-            "comment"
+            self.working_file.id,
+            self.output_type.id,
+            self.person.id
         )
         self.assertEqual(output_file.revision, 1)
         output_file = file_info.create_new_output_revision(
             self.entity.id,
             self.task.id,
-            self.person.id,
-            "comment"
+            self.working_file.id,
+            self.output_type.id,
+            self.person.id
         )
         self.assertEqual(output_file.revision, 2)
-
-    def test_get_next_output_revision_number(self):
-        revision = file_info.get_next_output_revision_number(self.task)
-
-        self.assertEqual(revision, 2)
-
-    def test_get_last_output_revision(self):
-        output_file = file_info.create_new_output_revision(
-            self.entity.id,
-            self.task.id,
-            self.person.id,
-            "comment"
-        )
-        output_file = file_info.create_new_output_revision(
-            self.entity.id,
-            self.task.id,
-            self.person.id,
-            "comment"
-        )
-
         output_file = file_info.get_last_output_revision(
             self.task.id,
-            self.entity.id
+            self.output_type.id
         )
-        self.assertEqual(output_file.revision, 3)
+        self.assertEqual(output_file.revision, 2)

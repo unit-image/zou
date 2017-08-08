@@ -26,7 +26,8 @@ class WorkingFileTestCase(ApiDBTestCase):
             3,
             task_id=self.task.id,
             entity_id=self.entity.id,
-            person_id=self.person.id
+            person_id=self.person.id,
+            outputs=[]
         )
 
     def test_get_working_files(self):
@@ -75,3 +76,15 @@ class WorkingFileTestCase(ApiDBTestCase):
         working_files = self.get("data/working_files")
         self.assertEquals(len(working_files), 2)
         self.delete_404("data/working_files/%s" % fields.gen_uuid())
+
+    def test_serialize_outputs(self):
+        working_file = self.generate_fixture_working_file()
+        self.generate_fixture_file_status()
+        self.generate_fixture_output_type()
+        output_file = self.generate_fixture_output_file()
+        output_file.source_file_id = working_file.id
+        output_file.save()
+        self.assertEquals(
+            working_file.serialize()["outputs"],
+            [str(output_file.id)]
+        )
