@@ -91,3 +91,5 @@ ENV/
 # Vagrant files
 Vagrantfile
 .vagrant
+
+sessions
