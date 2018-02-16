@@ -1,5 +1,6 @@
 stages:
   - test
+  - deploy
 
 tests:python:
   stage: test
