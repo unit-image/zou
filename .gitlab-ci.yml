@@ -7,24 +7,24 @@ tests:python:
   services:
     - postgres:9
   variables:
-    POSTGRES_DB: zoudb
-    POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: mysecretpassword
+    AUTH_STRATEGY: auth_local_no_password
     DB_HOST: postgres
+    POSTGRES_DB: zoudb
+    POSTGRES_PASSWORD: mysecretpassword
+    POSTGRES_USER: postgres
   script:
-    # Update
-    - apt update
-    - wget http://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2016.8.1_all.deb
-    - dpkg -i deb-multimedia-keyring_2016.8.1_all.deb
-    - echo "deb http://www.deb-multimedia.org stretch main non-free" | tee -a /etc/apt/sources.list
-    - apt update
-    - apt install -y python-dev libpq-dev
-    - apt install -y --force-yes ffmpeg
+    # Create thumbnail folder
+    - export PREVIEW_FOLDER=$(pwd)/data  # Note: ABSOLUTE path required
+    - mkdir -p $PREVIEW_FOLDER
+
+    # Install pg_dump
+    - apt-get update
+    - apt-get install postgresql-client --yes
 
     # Install requirements
     - pip install -r requirements.txt
 
     # Run Tests
-    - PYTHONPATH=. py.test
+    - PYTHONPATH=. py.test --ignore=tests/auth/test_auth_route.py
   tags:
     - test
