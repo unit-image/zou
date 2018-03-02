@@ -24,6 +24,11 @@ class EntityLink(db.Model, BaseMixin):
 
 
 class Entity(db.Model, BaseMixin, SerializerMixin):
+    """
+    Base model to represent assets, shots, sequences, episodes and scenes.
+    They have different meaning but they share the same behaviour toward
+    tasks and files.
+    """
     id = db.Column(
         UUIDType(binary=False),
         primary_key=True,
@@ -36,11 +41,22 @@ class Entity(db.Model, BaseMixin, SerializerMixin):
     canceled = db.Column(db.Boolean, default=False)
 
     project_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey('project.id'), nullable=False)
+        UUIDType(binary=False),
+        db.ForeignKey('project.id'),
+        nullable=False,
+        index=True
+    )
     entity_type_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey('entity_type.id'), nullable=False)
+        UUIDType(binary=False),
+        db.ForeignKey('entity_type.id'),
+        nullable=False,
+        index=True
+    )
     parent_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey('entity.id'))
+        UUIDType(binary=False),
+        db.ForeignKey('entity.id'),
+        index=True
+    )
     preview_file_id = db.Column(
         UUIDType(binary=False),
         db.ForeignKey('preview_file.id', name="fk_main_preview")

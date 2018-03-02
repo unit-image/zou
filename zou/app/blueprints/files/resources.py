@@ -7,7 +7,7 @@ from flask_jwt_extended import jwt_required
 from zou.app.mixin import ArgsMixin
 from zou.app.utils import permissions
 from zou.app.services import (
-    file_tree,
+    file_tree_service,
     files_service,
     persons_service,
     projects_service,
@@ -57,14 +57,14 @@ class WorkingFilePathResource(Resource):
                     task_id,
                     name
                 )
-            file_path = file_tree.get_working_folder_path(
+            file_path = file_tree_service.get_working_folder_path(
                 task,
                 mode=mode,
                 software=software,
                 name=name,
                 sep=separator
             )
-            file_name = file_tree.get_working_file_name(
+            file_name = file_tree_service.get_working_file_name(
                 task,
                 mode=mode,
                 revision=revision,
@@ -129,7 +129,7 @@ class EntityOutputFilePathResource(Resource, ArgsMixin):
             else:
                 revision = args["revision"]
 
-            folder_path = file_tree.get_output_folder_path(
+            folder_path = file_tree_service.get_output_folder_path(
                 entity,
                 mode=args["mode"],
                 output_type=output_type,
@@ -139,7 +139,7 @@ class EntityOutputFilePathResource(Resource, ArgsMixin):
                 sep=args["separator"],
                 revision=args["revision"]
             )
-            file_name = file_tree.get_output_file_name(
+            file_name = file_tree_service.get_output_file_name(
                 entity,
                 mode=args["mode"],
                 revision=revision,
@@ -190,7 +190,7 @@ class InstanceOutputFilePathResource(Resource, ArgsMixin):
             if not permissions.has_manager_permissions():
                 user_service.check_has_task_related(asset["project_id"])
 
-            folder_path = file_tree.get_instance_folder_path(
+            folder_path = file_tree_service.get_instance_folder_path(
                 asset_instance,
                 output_type=output_type,
                 task_type=task_type,
@@ -200,7 +200,7 @@ class InstanceOutputFilePathResource(Resource, ArgsMixin):
                 revision=args["revision"],
                 sep=args["separator"]
             )
-            file_name = file_tree.get_instance_file_name(
+            file_name = file_tree_service.get_instance_file_name(
                 asset_instance,
                 output_type=output_type,
                 task_type=task_type,
@@ -317,12 +317,12 @@ class NewWorkingFileResource(Resource):
         return working_file, 201
 
     def build_path(self, task, name, revision, software, sep):
-        folder_path = file_tree.get_working_folder_path(
+        folder_path = file_tree_service.get_working_folder_path(
             task,
             name=name,
             software=software
         )
-        file_name = file_tree.get_working_file_name(
+        file_name = file_tree_service.get_working_file_name(
             task,
             name=name,
             software=software,
@@ -459,7 +459,8 @@ class NewEntityOutputFileResource(Resource, ArgsMixin):
                 name=args["name"],
                 comment=args["comment"],
                 representation=args["representation"],
-                extension=args["extension"]
+                extension=args["extension"],
+                nb_elements=int(args["nb_elements"])
             )
 
             output_file_dict = self.add_path_info(
@@ -471,7 +472,8 @@ class NewEntityOutputFileResource(Resource, ArgsMixin):
                 name=args["name"],
                 extension=args["extension"],
                 representation=args["representation"],
-                separator=args["sep"]
+                separator=args["sep"],
+                nb_elements=int(args["nb_elements"])
             )
         except OutputTypeNotFoundException:
             return {"error": "Cannot find given output type."}, 400
@@ -494,6 +496,7 @@ class NewEntityOutputFileResource(Resource, ArgsMixin):
             ("revision", 0, False),
             ("extension", "", False),
             ("representation", "", False),
+            ("nb_elements", 1, False),
             ("sep", "/", False)
         ])
 
@@ -507,9 +510,10 @@ class NewEntityOutputFileResource(Resource, ArgsMixin):
         name="main",
         extension="",
         representation="",
+        nb_elements=1,
         separator="/"
     ):
-        folder_path = file_tree.get_output_folder_path(
+        folder_path = file_tree_service.get_output_folder_path(
             entity,
             mode=mode,
             output_type=output_type,
@@ -519,13 +523,14 @@ class NewEntityOutputFileResource(Resource, ArgsMixin):
             name=name,
             sep=separator
         )
-        file_name = file_tree.get_output_file_name(
+        file_name = file_tree_service.get_output_file_name(
             entity,
             mode=mode,
             revision=output_file["revision"],
             output_type=output_type,
             task_type=task_type,
-            name=name
+            name=name,
+            nb_elements=nb_elements
         )
 
         output_file = files_service.update_output_file(
@@ -599,6 +604,7 @@ class NewInstanceOutputFileResource(Resource, ArgsMixin):
                 name=args["name"],
                 representation=args["representation"],
                 comment=args["comment"],
+                nb_elements=int(args["nb_elements"]),
                 extension=args["extension"]
             )
 
@@ -611,6 +617,7 @@ class NewInstanceOutputFileResource(Resource, ArgsMixin):
                 name=args["name"],
                 extension=args["extension"],
                 representation=args["representation"],
+                nb_elements=int(args["nb_elements"]),
                 separator=args["sep"]
             )
         except OutputTypeNotFoundException:
@@ -634,6 +641,8 @@ class NewInstanceOutputFileResource(Resource, ArgsMixin):
             ("revision", 0, False),
             ("extension", "", False),
             ("representation", "", False),
+            ("is_sequence", False, False),
+            ("nb_elements", 1, False),
             ("sep", "/", False)
         ])
 
@@ -647,9 +656,10 @@ class NewInstanceOutputFileResource(Resource, ArgsMixin):
         name="main",
         extension="",
         representation="",
+        nb_elements=1,
         separator="/"
     ):
-        folder_path = file_tree.get_instance_folder_path(
+        folder_path = file_tree_service.get_instance_folder_path(
             asset_instance,
             mode=mode,
             output_type=output_type,
@@ -659,7 +669,7 @@ class NewInstanceOutputFileResource(Resource, ArgsMixin):
             name=name,
             sep=separator
         )
-        file_name = file_tree.get_instance_file_name(
+        file_name = file_tree_service.get_instance_file_name(
             asset_instance,
             mode=mode,
             revision=output_file["revision"],
@@ -822,13 +832,19 @@ class EntityOutputTypeOutputFilesResource(Resource):
 
     @jwt_required
     def get(self, entity_id, output_type_id):
+        representation = request.args.get("representation", None)
+
         entity = entities_service.get_entity(entity_id)
         files_service.get_output_type(output_type_id)
         user_service.check_project_access(entity["project_id"])
-        return files_service.get_output_files_for_output_types_and_entity(
-            entity_id,
-            output_type_id
-        )
+        output_files = \
+            files_service.get_output_files_for_output_type_and_entity(
+                entity_id,
+                output_type_id,
+                representation=representation
+            )
+
+        return output_files
 
 
 class InstanceOutputTypeOutputFilesResource(Resource):
@@ -838,15 +854,19 @@ class InstanceOutputTypeOutputFilesResource(Resource):
 
     @jwt_required
     def get(self, asset_instance_id, output_type_id):
+        representation = request.args.get("representation", None)
+
         asset_instance = assets_service.get_asset_instance(asset_instance_id)
         asset = assets_service.get_asset(asset_instance["asset_id"])
         user_service.check_project_access(asset["project_id"])
 
         files_service.get_output_type(output_type_id)
-        return files_service.get_output_files_for_output_type_and_asset_instance(
-            asset_instance_id,
-            output_type_id
-        )
+        return \
+            files_service.get_output_files_for_output_type_and_asset_instance(
+                asset_instance_id,
+                output_type_id,
+                representation=representation
+            )
 
 
 class FileResource(Resource):
@@ -884,7 +904,7 @@ class SetTreeResource(Resource):
 
         try:
             permissions.check_manager_permissions()
-            tree = file_tree.get_tree_from_file(tree_name)
+            tree = file_tree_service.get_tree_from_file(tree_name)
             project = projects_service.update_project(
                 project_id,
                 {"file_tree": tree}

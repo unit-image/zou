@@ -7,20 +7,30 @@ from zou.app.models.base import BaseMixin
 
 
 class AssetInstance(db.Model, BaseMixin, SerializerMixin):
+    """
+    An asset instance is the representation of an asset in a given shot or
+    layout scene. It is useful for complex scenes where an asset needs extra
+    treatments only related to the given shot or layout scene.
+    An asset can have multiple instances in a scene (ex: a sword in a battle
+    field).
+    """
     asset_id = db.Column(
         UUIDType(binary=False),
         db.ForeignKey('entity.id'),
-        nullable=False
+        nullable=False,
+        index=True
     )
     entity_id = db.Column(
         UUIDType(binary=False),
         db.ForeignKey('entity.id'),
-        nullable=False
+        nullable=False,
+        index=True
     )
     entity_type_id = db.Column(
         UUIDType(binary=False),
         db.ForeignKey('entity_type.id'),
-        nullable=False
+        nullable=False,
+        index=True
     )
     number = db.Column(db.Integer())
     description = db.Column(db.String(200))

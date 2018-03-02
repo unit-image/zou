@@ -7,7 +7,11 @@ from zou.app.models.base import BaseMixin
 
 
 class WorkingFile(db.Model, BaseMixin, SerializerMixin):
-    shotgun_id = db.Column(db.Integer())
+    """
+    Describes the file related to the work done on a given task. It is
+    used as source of output files published for a given entity.
+    """
+    shotgun_id = db.Column(db.Integer(), index=True)
 
     name = db.Column(db.String(250))
     description = db.Column(db.String(200))
@@ -17,8 +21,16 @@ class WorkingFile(db.Model, BaseMixin, SerializerMixin):
     checksum = db.Column(db.Integer())
     path = db.Column(db.String(400))
 
-    task_id = db.Column(UUIDType(binary=False), db.ForeignKey("task.id"))
-    entity_id = db.Column(UUIDType(binary=False), db.ForeignKey("entity.id"))
+    task_id = db.Column(
+        UUIDType(binary=False),
+        db.ForeignKey("task.id"),
+        index=True
+    )
+    entity_id = db.Column(
+        UUIDType(binary=False),
+        db.ForeignKey("entity.id"),
+        index=True
+    )
     person_id = \
         db.Column(UUIDType(binary=False), db.ForeignKey("person.id"))
     software_id = \
