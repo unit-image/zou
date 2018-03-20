@@ -17,18 +17,22 @@ class AssetInstance(db.Model, BaseMixin, SerializerMixin):
     asset_id = db.Column(
         UUIDType(binary=False),
         db.ForeignKey('entity.id'),
-        nullable=False
+        nullable=False,
+        index=True
     )
     entity_id = db.Column(
         UUIDType(binary=False),
         db.ForeignKey('entity.id'),
-        nullable=False
+        nullable=False,
+        index=True
     )
     entity_type_id = db.Column(
         UUIDType(binary=False),
         db.ForeignKey('entity_type.id'),
-        nullable=False
+        nullable=False,
+        index=True
     )
+    name = db.Column(db.String(80))
     number = db.Column(db.Integer())
     description = db.Column(db.String(200))
     data = db.Column(JSONB)
@@ -40,6 +44,11 @@ class AssetInstance(db.Model, BaseMixin, SerializerMixin):
             'number',
             name='asset_instance_uc'
         ),
+        db.UniqueConstraint(
+            'entity_id',
+            'name',
+            name='asset_instance_name_uc'
+        )
     )
 
     def __repr__(self):

@@ -2,6 +2,7 @@ import pytest
 
 from tests.base import ApiDBTestCase
 
+from zou.app.models.entity import Entity
 from zou.app.services import shots_service
 from zou.app.services.exception import (
     SceneNotFoundException,
@@ -16,12 +17,12 @@ class ShotUtilsTestCase(ApiDBTestCase):
 
         self.generate_fixture_project_status()
         self.generate_fixture_project()
-        self.generate_fixture_entity_type()
+        self.generate_fixture_asset_type()
         self.generate_fixture_episode()
         self.generate_fixture_sequence()
         self.generate_fixture_shot()
         self.generate_fixture_scene()
-        self.generate_fixture_entity()
+        self.generate_fixture_asset()
 
     def test_get_sequence_from_shot(self):
         sequence = shots_service.get_sequence_from_shot(self.shot.serialize())
@@ -34,6 +35,12 @@ class ShotUtilsTestCase(ApiDBTestCase):
         self.assertEquals(episode["name"], 'E01')
 
     def test_get_sequence_from_shot_no_sequence(self):
+        self.shot_noseq = Entity.create(
+            name="P01NOSEQ",
+            project_id=self.project.id,
+            entity_type_id=self.shot_type.id
+        )
+
         self.assertRaises(
             SequenceNotFoundException,
             shots_service.get_sequence_from_shot,
@@ -110,15 +117,15 @@ class ShotUtilsTestCase(ApiDBTestCase):
 
     def test_is_shot(self):
         self.assertTrue(shots_service.is_shot(self.shot.serialize()))
-        self.assertFalse(shots_service.is_shot(self.entity.serialize()))
+        self.assertFalse(shots_service.is_shot(self.asset.serialize()))
 
     def test_is_scene(self):
         self.assertTrue(shots_service.is_scene(self.scene.serialize()))
-        self.assertFalse(shots_service.is_scene(self.entity.serialize()))
+        self.assertFalse(shots_service.is_scene(self.asset.serialize()))
 
     def test_is_sequence(self):
         self.assertTrue(shots_service.is_sequence(self.sequence.serialize()))
-        self.assertFalse(shots_service.is_sequence(self.entity.serialize()))
+        self.assertFalse(shots_service.is_sequence(self.asset.serialize()))
 
     def test_get_shot(self):
         self.assertEquals(

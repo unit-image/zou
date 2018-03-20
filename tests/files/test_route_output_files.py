@@ -12,8 +12,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
 
         self.generate_fixture_project_status()
         self.generate_fixture_project()
-        self.generate_fixture_entity_type()
-        self.generate_fixture_entity()
+        self.generate_fixture_asset_type()
+        self.generate_fixture_asset()
         self.generate_fixture_sequence()
         self.generate_fixture_shot()
         self.generate_fixture_department()
@@ -42,7 +42,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
         self.task_id = self.task.id
         self.person_id = str(self.person.id)
         self.working_file_id = str(self.working_file.id)
-        self.asset_id = str(self.entity.id)
+        self.asset_id = str(self.asset.id)
         self.task_type_id = str(self.task_type.id)
 
     def new_output(self, data, code=201):
@@ -92,7 +92,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
     def test_get_last_output_files(self):
         self.generate_output_files()
         output_files = self.get(
-            "/data/entities/%s/output-files/last-revisions" % self.entity.id
+            "/data/entities/%s/output-files/last-revisions" % self.asset.id
         )
         self.assertEqual(
             output_files[str(self.geometry_id)]["main"],
@@ -124,7 +124,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             task=self.shot_task
         )
         output_types = self.get(
-            "/data/entities/%s/output-types" % self.entity.id
+            "/data/entities/%s/output-types" % self.asset.id
         )
         self.assertEquals(len(output_types), 4)
         self.assertEquals(output_types[0]["name"], "Cache")
@@ -133,7 +133,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
         self.generate_output_files()
         output_files = self.get(
             "/data/entities/%s/output-types/%s/output-files" % (
-                self.entity.id,
+                self.asset.id,
                 self.cache_type_id
             )
         )
@@ -213,6 +213,31 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "cosmos_landromat_props_tree_shaders_texture_special_v001.tx"
         )
 
+    def test_new_output_with_extension_and_elements(self):
+        data = {
+            "person_id": self.person_id,
+            "comment": "test working file publish with extension",
+            "output_type_id": self.tx_type_id,
+            "task_type_id": self.task_type_id,
+            "working_file_id": self.working_file_id,
+            "extension": ".jpg",
+            "nb_elements": 50,
+            "name": "special"
+        }
+        result = self.new_output(data)
+        output_file_id = result["id"]
+        output_file = self.get("/data/output-files/%s" % output_file_id)
+
+        self.assertEqual(output_file["extension"], ".jpg")
+        self.assertEqual(output_file["nb_elements"], 50)
+        self.assertEqual(
+            output_file["path"],
+            "/simple/productions/export/cosmos_landromat/assets/props/tree/"
+            "shaders/texture/"
+            "cosmos_landromat_props_tree_shaders_"
+            "texture_special_v001_[1-50].jpg"
+        )
+
     def test_new_output_again(self):
         data = {
             "comment": "test working file publish",
@@ -290,7 +315,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
         self.generate_fixture_output_type()
         self.generate_fixture_output_file()
         result = self.post(
-            "/data/entities/%s/output-files/next-revision" % self.entity.id,
+            "/data/entities/%s/output-files/next-revision" % self.asset.id,
             {
                 "output_type_id": self.output_type.id,
                 "task_type_id": self.task_type_id
@@ -303,7 +328,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
         self.generate_fixture_output_type()
         self.generate_fixture_output_file(revision=5, name="other-output")
         result = self.post(
-            "/data/entities/%s/output-files/next-revision" % self.entity.id,
+            "/data/entities/%s/output-files/next-revision" % self.asset.id,
             {
                 "name": "other-output",
                 "output_type_id": self.output_type.id,
@@ -328,7 +353,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
     def test_get_next_revision_with_empty_revision(self):
         self.generate_fixture_output_type()
         result = self.post(
-            "/data/entities/%s/output-files/next-revision" % self.entity.id,
+            "/data/entities/%s/output-files/next-revision" % self.asset.id,
             {
                 "name": "main",
                 "output_type_id": self.output_type.id,
@@ -360,14 +385,14 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
         )
         self.assertEqual(
             result["file_name"],
-            "cosmos_landromat_s01_p01_animation_cache_main_props_tree_instance_"
+            "cosmos_landromat_s01_p01_animation_cache_main_props_tree_"
             "0001_v001"
         )
         self.assertEqual(
             result["path"],
             "/simple/productions/export/cosmos_landromat/shot/s01/p01/"
             "animation/cache/props/tree/instance_0001/abc/cosmos_landromat_s01_"
-            "p01_animation_cache_main_props_tree_instance_0001_v001"
+            "p01_animation_cache_main_props_tree_0001_v001"
         )
 
         output_file_id = result["id"]
@@ -456,8 +481,89 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             self.asset_instance_id,
             200
         )
-        print(result)
         self.assertEquals(
             result[0]["id"],
             self.cache_type_id
         )
+
+    def test_get_output_files_for_output_type_and_entity(self):
+        self.generate_fixture_output_type()
+        geometry = self.output_type
+        self.generate_fixture_output_file(geometry, 1, representation="obj")
+        self.generate_fixture_output_file(geometry, 2, representation="obj")
+        self.generate_fixture_output_file(geometry, 3, representation="obj")
+        self.generate_fixture_output_file(geometry, 4, representation="obj")
+
+        self.generate_fixture_output_file(geometry, 1, representation="max")
+        self.generate_fixture_output_file(geometry, 2, representation="max")
+        self.generate_fixture_output_file(geometry, 3, representation="max")
+
+        output_files = self.get(
+            "data/entities/%s/output-types/%s/output-files" % (
+                self.asset.id, geometry.id
+            ))
+        self.assertEquals(len(output_files), 7)
+
+        output_files = self.get(
+            "data/entities/%s/output-types/%s/"
+            "output-files?representation=obj" % (
+                self.asset.id, geometry.id
+            ))
+        self.assertEquals(len(output_files), 4)
+
+        output_files = self.get(
+            "data/entities/%s/output-types/%s/"
+            "output-files?representation=max" % (
+                self.asset.id, geometry.id
+            ))
+        self.assertEquals(len(output_files), 3)
+
+    def test_get_output_files_for_output_type_and_asset_instance(self):
+        self.generate_fixture_shot_asset_instance(
+            asset=self.asset,
+            shot=self.shot
+        )
+        self.generate_fixture_output_type()
+        geometry = self.output_type
+        self.generate_fixture_output_file(
+            geometry, 1, representation="obj",
+            asset_instance=self.asset_instance)
+        self.generate_fixture_output_file(
+            geometry, 2, representation="obj",
+            asset_instance=self.asset_instance)
+        self.generate_fixture_output_file(
+            geometry, 3, representation="obj",
+            asset_instance=self.asset_instance)
+        self.generate_fixture_output_file(
+            geometry, 4, representation="obj",
+            asset_instance=self.asset_instance)
+
+        self.generate_fixture_output_file(
+            geometry, 1, representation="max",
+            asset_instance=self.asset_instance)
+        self.generate_fixture_output_file(
+            geometry, 2, representation="max",
+            asset_instance=self.asset_instance)
+        self.generate_fixture_output_file(
+            geometry, 3, representation="max",
+            asset_instance=self.asset_instance)
+
+        output_files = self.get(
+            "data/asset-instances/%s/output-types/%s/output-files" % (
+                self.asset_instance.id, geometry.id
+            ))
+        self.assertEquals(len(output_files), 7)
+
+        output_files = self.get(
+            "data/asset-instances/%s/output-types/%s/"
+            "output-files?representation=obj" % (
+                self.asset_instance.id, geometry.id
+            ))
+        self.assertEquals(len(output_files), 4)
+
+        output_files = self.get(
+            "data/asset-instances/%s/output-types/%s/"
+            "output-files?representation=max" % (
+                self.asset_instance.id, geometry.id
+            ))
+        self.assertEquals(len(output_files), 3)

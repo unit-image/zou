@@ -27,6 +27,8 @@ from zou.app.services.exception import (
     TaskNotFoundException
 )
 
+ALLOWED_FIELDS = ["short_name", "name", "number"]
+
 
 def get_working_file_path(
     task,
@@ -127,7 +129,8 @@ def get_output_file_name(
     output_type=None,
     task_type=None,
     name="",
-    revision=1
+    revision=1,
+    nb_elements=1
 ):
     project = get_project(entity)
     tree = get_tree_from_project(project)
@@ -143,6 +146,9 @@ def get_output_file_name(
         revision=revision
     )
 
+    if nb_elements > 1:
+        file_name += "_[1-%s]" % nb_elements
+
     return u"%s" % file_name
 
 
@@ -152,7 +158,8 @@ def get_instance_file_name(
     task_type=None,
     mode="output",
     name="main",
-    revision=1
+    revision=1,
+    nb_elements=1
 ):
     shot = tasks_service.get_entity(asset_instance["entity_id"])
     asset = tasks_service.get_entity(asset_instance["asset_id"])
@@ -170,6 +177,9 @@ def get_instance_file_name(
         asset=asset,
         revision=revision
     )
+
+    if nb_elements > 1:
+        file_name += "_[1-%s]" % nb_elements
 
     return u"%s" % file_name
 
@@ -394,12 +404,22 @@ def update_variable(
     revision=1,
     style="lowercase"
 ):
-    variables = re.findall('<(\w*)>', template)
+    variables = re.findall('<([\w\.]*)>', template)
 
     render = template
     for variable in variables:
+        variable_infos = variable.split(".")
+        data_type = variable_infos[0]
+        is_field_given = len(variable_infos) > 1
+        if is_field_given:
+            field = variable_infos[1]
+            if field not in ALLOWED_FIELDS:
+                field = "name"
+        else:
+            field = "name"
+
         data = get_folder_from_datatype(
-            variable,
+            data_type,
             entity=entity,
             task=task,
             task_type=task_type,
@@ -409,13 +429,15 @@ def update_variable(
             asset_instance=asset_instance,
             asset=asset,
             representation=representation,
-            revision=revision
-        )
-        render = render.replace(
-            "<%s>" % variable,
-            apply_style(slugify(data, separator="_"), style)
+            revision=revision,
+            field=field
         )
 
+        if data is not None:
+            render = render.replace(
+                "<%s>" % variable,
+                apply_style(slugify(data, separator="_"), style)
+            )
     return render
 
 
@@ -430,16 +452,17 @@ def get_folder_from_datatype(
     asset_instance=None,
     asset=None,
     representation="",
-    revision=1
+    revision=1,
+    field="name"
 ):
     if datatype == "Project":
         folder = get_folder_from_project(entity)
     elif datatype == "Task":
         folder = get_folder_from_task(task)
     elif datatype == "TaskType":
-        folder = get_folder_from_task_type(task, task_type)
+        folder = get_folder_from_task_type(task, task_type, field)
     elif datatype == "Department":
-        folder = get_folder_from_department(task)
+        folder = get_folder_from_department(task, field)
     elif datatype == "Shot":
         folder = get_folder_from_shot(entity)
     elif datatype == "TemporalEntity":
@@ -461,13 +484,13 @@ def get_folder_from_datatype(
         else:
             folder = get_folder_from_asset(asset)
     elif datatype == "Software":
-        folder = get_folder_from_software(software)
+        folder = get_folder_from_software(software, field)
     elif datatype == "OutputType":
-        folder = get_folder_from_output_type(output_type)
+        folder = get_folder_from_output_type(output_type, field)
     elif datatype == "Scene":
         folder = get_folder_from_scene(entity)
     elif datatype == "Instance":
-        folder = get_folder_from_asset_instance(asset_instance)
+        folder = get_folder_from_asset_instance(asset_instance, field)
     elif datatype == "Representation":
         folder = get_folder_from_representation(representation)
     elif datatype in ["Name", "OutputFile", "WorkingFile"]:
@@ -493,28 +516,28 @@ def get_folder_from_shot(shot):
     return shot["name"]
 
 
-def get_folder_from_output_type(output_type):
+def get_folder_from_output_type(output_type, field="name"):
     if output_type is None:
         output_type = files_service.get_or_create_output_type("Geometry")
 
-    return output_type["name"].lower()
+    return output_type[field].lower()
 
 
-def get_folder_from_department(task):
+def get_folder_from_department(task, field="name"):
     folder = ""
     department = tasks_service.get_department_from_task(task["id"])
-    folder = department["name"]
+    folder = department[field]
     return folder
 
 
-def get_folder_from_task_type(task, task_type):
+def get_folder_from_task_type(task, task_type, field="name"):
     folder = ""
     if task_type is None and task is not None:
         task_type = tasks_service.get_task_type(task["task_type_id"])
         if task_type is not None:
-            folder = task_type["name"]
+            folder = task_type[field]
     elif task_type is not None:
-        folder = task_type["name"]
+        folder = task_type[field]
     return folder
 
 
@@ -584,10 +607,10 @@ def get_folder_from_asset_type(asset):
     return folder
 
 
-def get_folder_from_software(software):
+def get_folder_from_software(software, field="name"):
     if software is None:
         software = files_service.get_or_create_software("3dsmax", "max", ".max")
-    return software["name"]
+    return software[field]
 
 
 def get_folder_from_scene(scene):
@@ -597,11 +620,18 @@ def get_folder_from_scene(scene):
     return folder
 
 
-def get_folder_from_asset_instance(asset_instance):
+def get_folder_from_asset_instance(asset_instance, field):
+    folder = ""
     if asset_instance is not None:
-        return str(asset_instance["number"]).zfill(4)
-    else:
-        return ""
+        number = str(asset_instance.get("number", 0)).zfill(4)
+        if field == "name":
+            folder = asset_instance.get("name", number)
+            if folder is None:
+                folder = number
+        else:
+            folder = number
+
+    return folder
 
 
 def get_folder_from_representation(representation):

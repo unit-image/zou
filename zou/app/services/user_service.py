@@ -33,7 +33,9 @@ def asset_type_filter():
     shot_type = shots_service.get_shot_type()
     sequence_type = shots_service.get_sequence_type()
     episode_type = shots_service.get_episode_type()
+    scene_type = shots_service.get_scene_type()
     return ~EntityType.id.in_([
+        scene_type["id"],
         shot_type["id"],
         sequence_type["id"],
         episode_type["id"]
@@ -166,11 +168,25 @@ def get_sequence_scenes(sequence_id):
     return Entity.serialize_list(query.all(), obj_type="Scene")
 
 
-def get_projects():
+def get_open_projects(name=None):
     query = Project.query \
         .join(Task, ProjectStatus) \
         .filter(assignee_filter()) \
         .filter(open_project_filter())
+
+    if name is not None:
+        query = query.filter(Project.name == name)
+
+    return fields.serialize_value(query.all())
+
+
+def get_projects(name=None):
+    query = Project.query \
+        .join(Task, ProjectStatus) \
+        .filter(assignee_filter())
+
+    if name is not None:
+        query = query.filter(Project.name == name)
 
     return fields.serialize_value(query.all())
 
