@@ -1,6 +1,7 @@
 from sqlalchemy.exc import StatementError, IntegrityError
 
 from zou.app.utils import events, fields
+from zou.app.utils import query as query_utils
 
 from zou.app.models.entity import Entity
 from zou.app.models.entity_type import EntityType
@@ -18,7 +19,7 @@ from zou.app.services.exception import (
 )
 
 
-def build_entity_asset_type_filter():
+def build_asset_type_filter():
     """
     Generate a query filter to filter entity that are assets (it means not shot,
     not sequence, not episode and not scene)
@@ -57,8 +58,8 @@ def get_assets(criterions={}):
     Get all assets for given criterions.
     """
     query = Entity.query \
-        .filter_by(**criterions) \
-        .filter(build_entity_asset_type_filter())
+        .filter(build_asset_type_filter())
+    query = query_utils.apply_criterions_to_db_query(Entity, query, criterions)
     result = query.all()
     return EntityType.serialize_list(result, obj_type="Asset")
 
@@ -70,7 +71,7 @@ def get_full_assets(criterions={}):
     """
     query = Entity.query \
         .filter_by(**criterions) \
-        .filter(build_entity_asset_type_filter()) \
+        .filter(build_asset_type_filter()) \
         .join(Project, EntityType) \
         .add_columns(Project.name, EntityType.name) \
         .order_by(Project.name, EntityType.name, Entity.name)
@@ -93,7 +94,7 @@ def get_assets_and_tasks(criterions={}, page=1):
     task_map = {}
 
     query = Entity.query \
-        .filter(build_entity_asset_type_filter()) \
+        .filter(build_asset_type_filter()) \
         .join(EntityType) \
         .outerjoin(Task) \
         .outerjoin(assignees_table) \
@@ -158,8 +159,8 @@ def get_asset_types(criterions={}):
     Retrieve all asset types available.
     """
     query = EntityType.query \
-        .filter_by(**criterions) \
         .filter(build_entity_type_asset_type_filter())
+    query = query_utils.apply_criterions_to_db_query(Entity, query, criterions)
     return EntityType.serialize_list(query.all(), obj_type="AssetType")
 
 
@@ -445,7 +446,7 @@ def remove_asset_link(asset_in_id, asset_out_id):
 
     if asset_out in asset_in.entities_out:
         asset_in.entities_out = \
-            [x for x in asset_in.entities_out if x.id != asset_out]
+            [x for x in asset_in.entities_out if x.id != asset_out_id]
         asset_in.save()
         events.emit("asset:remove-link", {
             "asset_in": asset_in.serialize(obj_type="Asset"),

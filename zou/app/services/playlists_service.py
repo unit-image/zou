@@ -3,16 +3,23 @@ from zou.app.models.preview_file import PreviewFile
 
 from zou.app.utils import fields
 
-from zou.app.services import shots_service, tasks_service
+from zou.app.services import tasks_service
 
 from zou.app.services.exception import PlaylistNotFoundException
 
 
 def all_playlists_for_project(project_id):
+    """
+    Return all playlists created for given project.
+    """
     return fields.serialize_value(Playlist.get_all_by(project_id=project_id))
 
 
 def get_playlist_with_preview_file_revisions(playlist_id):
+    """
+    Return given playlist. Shot list is augmented with all previews available
+    for a given shot.
+    """
     playlist = Playlist.get(playlist_id)
 
     if playlist is None:
@@ -24,13 +31,16 @@ def get_playlist_with_preview_file_revisions(playlist_id):
         playlist_dict["shots"] = []
 
     for shot in playlist_dict["shots"]:
-        shot["preview_files"] = shots_service.get_preview_files_for_shot(
+        shot["preview_files"] = get_preview_files_for_shot(
             shot["shot_id"]
         )
     return playlist_dict
 
 
 def get_preview_files_for_shot(shot_id):
+    """
+    Get all preview files available for given shot.
+    """
     tasks = tasks_service.get_tasks_for_shot(shot_id)
     previews = {}
 

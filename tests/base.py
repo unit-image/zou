@@ -1,3 +1,4 @@
+import datetime
 import unittest
 import json
 import os
@@ -233,11 +234,12 @@ class ApiDBTestCase(ApiTestCase):
         self.open_status = ProjectStatus.create(name="open", color="#FFFFFF")
 
     def generate_fixture_project_closed_status(self):
-        self.closed_status = ProjectStatus.create(name="closed", color="#FFFFFF")
+        self.closed_status = ProjectStatus.create(
+            name="closed", color="#FFFFFF")
 
-    def generate_fixture_project(self):
+    def generate_fixture_project(self, name="Cosmos Landromat"):
         self.project = Project.create(
-            name="Cosmos Landromat",
+            name=name,
             project_status_id=self.open_status.id
         )
         self.project.update({
@@ -469,6 +471,7 @@ class ApiDBTestCase(ApiTestCase):
             email=u"john.doe@gmail.com",
             password=auth.encrypt_password("mypassword")
         )
+        return self.person
 
     def generate_fixture_asset_type(self):
         self.asset_type = EntityType.create(name="Props")
@@ -737,3 +740,6 @@ class ApiDBTestCase(ApiTestCase):
         self.generate_fixture_sequence()
         self.generate_fixture_shot()
         self.generate_fixture_scene()
+
+    def now(self):
+        return datetime.datetime.now().isoformat()

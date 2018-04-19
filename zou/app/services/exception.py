@@ -85,6 +85,14 @@ class EntityTypeNotFoundException(NotFound):
     pass
 
 
+class PlaylistNotFoundException(NotFound):
+    pass
+
+
+class SearchFilterNotFoundException(NotFound):
+    pass
+
+
 class MalformedFileTreeException(Exception):
     pass
 
@@ -122,10 +130,6 @@ class WrongDateFormatException(Exception):
 
 
 class EntryAlreadyExistsException(Exception):
-    pass
-
-
-class PlaylistNotFoundException(Exception):
     pass
 
 

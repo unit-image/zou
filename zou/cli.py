@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import sys
 import flask_migrate
 
@@ -48,9 +49,14 @@ def reset_db():
 @cli.command()
 def upgrade_db():
     "Upgrade database schema."
+
     from zou.app import app
     with app.app_context():
-        flask_migrate.upgrade()
+        import zou
+        directory = os.path.join(
+            os.path.dirname(zou.__file__), "migrations"
+        )
+        flask_migrate.upgrade(directory=directory)
 
 
 @cli.command()
@@ -94,11 +100,11 @@ def init_data():
     projects_service.get_closed_status()
     print("Project status initialized.")
 
-    assets_service.get_or_create_type("Characters")
-    assets_service.get_or_create_type("Props")
-    assets_service.get_or_create_type("Environment")
-    assets_service.get_or_create_type("FX")
-    assets_service.get_or_create_type("Camera")
+    assets_service.get_or_create_asset_type("Characters")
+    assets_service.get_or_create_asset_type("Props")
+    assets_service.get_or_create_asset_type("Environment")
+    assets_service.get_or_create_asset_type("FX")
+    assets_service.get_or_create_asset_type("Camera")
     print("Asset types initialized.")
 
     shots_service.get_episode_type()

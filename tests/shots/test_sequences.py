@@ -33,6 +33,11 @@ class SequenceTestCase(ApiDBTestCase):
         self.assertEquals(sequence["episode_id"], str(self.episode.id))
         self.assertEquals(sequence["project_name"], self.project.name)
 
+    def test_get_sequence_by_name(self):
+        sequences = self.get(
+            "data/sequences?name=%s" % self.sequence.name.lower())
+        self.assertEquals(sequences[0]["id"], str(self.sequence.id))
+
     def test_get_sequence_tasks(self):
         self.generate_fixture_sequence_task()
         tasks = self.get("data/sequences/%s/tasks" % self.sequence.id)
@@ -52,3 +57,21 @@ class SequenceTestCase(ApiDBTestCase):
         sequence = self.get("data/sequences/%s" % sequence["id"])
         self.assertEquals(sequence["name"], sequence_name)
         self.assertEquals(sequence["parent_id"], episode_id)
+
+    def test_get_sequences_for_project(self):
+        sequences = self.get("data/projects/%s/sequences" % self.project.id)
+        self.assertEquals(len(sequences), 3)
+        self.assertDictEqual(
+            sequences[0],
+            self.serialized_sequence
+        )
+
+    def test_get_sequences_for_project_404(self):
+        self.get("data/projects/unknown/sequences", 404)
+
+    def test_get_shots_for_sequence(self):
+        self.generate_fixture_shot()
+        shot = self.shot.serialize(obj_type="Shot")
+        shots = self.get("data/sequences/%s/shots" % self.sequence.id)
+        self.assertEquals(len(shots), 1)
+        self.assertEqual(shots[0]["id"], shot["id"])

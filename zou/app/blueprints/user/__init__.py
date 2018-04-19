@@ -16,7 +16,10 @@ from .resources import (
     SceneTasksResource,
     SceneTaskTypesResource,
     TodosResource,
-    DoneResource
+    DoneResource,
+    FilterResource,
+    DesktopLoginLogsResource,
+    FiltersResource
 )
 
 routes = [
@@ -40,7 +43,12 @@ routes = [
     ("/data/user/sequences/<sequence_id>/scenes", SequenceScenesResource),
 
     ("/data/user/tasks", TodosResource),
-    ("/data/user/done-tasks", DoneResource)
+    ("/data/user/done-tasks", DoneResource),
+
+    ("/data/user/filters", FiltersResource),
+    ("/data/user/filters/<filter_id>", FilterResource),
+
+    ("/data/user/desktop-login-logs", DesktopLoginLogsResource),
 ]
 
 blueprint = Blueprint("user", "user")
