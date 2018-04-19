@@ -9,6 +9,7 @@ from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import IntegrityError, StatementError
 
 from zou.app.utils import permissions
+from zou.app.services.exception import ArgumentsException
 
 
 class BaseModelsResource(Resource):
@@ -92,8 +93,14 @@ class BaseModelsResource(Resource):
     def check_read_permissions(self):
         return permissions.check_manager_permissions()
 
+    def add_project_permission_filter(self, query):
+        return query
+
     def check_create_permissions(self, data):
         return permissions.check_manager_permissions()
+
+    def update_data(self, data):
+        return data
 
     @jwt_required
     def get(self):
@@ -104,6 +111,7 @@ class BaseModelsResource(Resource):
         try:
             self.check_read_permissions()
             query = self.model.query
+            query = self.add_project_permission_filter(query)
             if not request.args:
                 return self.all_entries(query)
             else:
@@ -130,6 +138,7 @@ class BaseModelsResource(Resource):
         try:
             data = request.json
             self.check_create_permissions(data)
+            data = self.update_data(data)
             instance = self.model(**data)
             instance.save()
             return instance.serialize(), 201
@@ -143,6 +152,10 @@ class BaseModelsResource(Resource):
             return {"message": str(exception)}, 400
 
         except StatementError as exception:
+            current_app.logger.error(str(exception))
+            return {"message": str(exception)}, 400
+
+        except ArgumentsException as exception:
             current_app.logger.error(str(exception))
             return {"message": str(exception)}, 400
 
@@ -171,6 +184,9 @@ class BaseModelResource(Resource):
     def get_arguments(self):
         return request.json
 
+    def update_data(self, data):
+        return data
+
     @jwt_required
     def get(self, instance_id):
         """
@@ -195,6 +211,7 @@ class BaseModelResource(Resource):
             data = self.get_arguments()
             instance = self.get_model_or_404(instance_id)
             self.check_update_permissions(instance.serialize(), data)
+            data = self.update_data(data)
             instance.update(data)
             return instance.serialize(), 200
 
@@ -211,6 +228,10 @@ class BaseModelResource(Resource):
             return {"message": str(exception)}, 400
 
         except StatementError as exception:
+            current_app.logger.error(str(exception))
+            return {"message": str(exception)}, 400
+
+        except ArgumentsException as exception:
             current_app.logger.error(str(exception))
             return {"message": str(exception)}, 400
 
