@@ -231,7 +231,7 @@ class ApiDBTestCase(ApiTestCase):
         )
 
     def generate_fixture_project_status(self):
-        self.open_status = ProjectStatus.create(name="open", color="#FFFFFF")
+        self.open_status = ProjectStatus.create(name="Open", color="#FFFFFF")
 
     def generate_fixture_project_closed_status(self):
         self.closed_status = ProjectStatus.create(
@@ -463,12 +463,18 @@ class ApiDBTestCase(ApiTestCase):
         )
         return self.user_cg_artist
 
-    def generate_fixture_person(self):
+    def generate_fixture_person(
+        self,
+        first_name="John",
+        last_name="Doe",
+        desktop_login="john.doe",
+        email="john.doe@gmail.com"
+    ):
         self.person = Person.create(
-            first_name="John",
-            last_name="Doe",
-            desktop_login="john.doe",
-            email=u"john.doe@gmail.com",
+            first_name=first_name,
+            last_name=last_name,
+            desktop_login=desktop_login,
+            email=email,
             password=auth.encrypt_password("mypassword")
         )
         return self.person
