@@ -202,8 +202,8 @@ class BaseModelResource(Resource):
     def update_data(self, data):
         return data
 
-    def clean_get_result(self, data):
-        return data
+    def serialize_instance(self, data):
+        return data.serialize()
 
     @jwt_required
     def get(self, instance_id):
