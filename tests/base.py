@@ -8,7 +8,11 @@ from mixer.backend.flask import mixer
 
 from zou.app import app
 from zou.app.utils import fields, auth
-from zou.app.services import file_tree_service, breakdown_service
+from zou.app.services import (
+    breakdown_service,
+    file_tree_service,
+    tasks_service
+)
 
 from zou.app.models.project import Project
 from zou.app.models.person import Person
@@ -270,18 +274,27 @@ class ApiDBTestCase(ApiTestCase):
             "file_tree": file_tree_service.get_tree_from_file("no_preview")
         })
 
-    def generate_fixture_asset(self):
+    def generate_fixture_asset(
+        self,
+        name="Tree",
+        description="Description Tree"
+    ):
         self.asset = Entity.create(
-            name="Tree",
-            description="Description Tree",
+            name=name,
+            description=description,
             project_id=self.project.id,
             entity_type_id=self.asset_type.id
         )
+        return self.asset
 
-    def generate_fixture_asset_character(self):
+    def generate_fixture_asset_character(
+        self,
+        name="Rabbit",
+        description="Main char"
+    ):
         self.asset_character = Entity.create(
-            name="Rabbit",
-            description="Main character",
+            name=name,
+            description=description,
             project_id=self.project.id,
             entity_type_id=self.asset_type_character.id
         )
@@ -391,25 +404,13 @@ class ApiDBTestCase(ApiTestCase):
 
     def generate_fixture_shot_asset_instance(
         self,
-        asset=None,
-        shot=None,
+        shot,
+        asset_instance,
         number=1
     ):
-        if asset is None:
-            asset = self.asset
-        if shot is None:
-            shot = self.shot
-        self.asset_instance = AssetInstance.create(
-            asset_id=asset.id,
-            entity_id=shot.id,
-            entity_type_id=self.shot_type.id,
-            number=number,
-            name=breakdown_service.build_asset_instance_name(
-                self.asset.id, number
-            ),
-            description="Asset instance description"
-        )
-        return self.asset_instance
+        self.shot.instance_casting.append(asset_instance)
+        self.shot.save()
+        return self.shot
 
     def generate_fixture_scene_asset_instance(
         self,
@@ -423,8 +424,7 @@ class ApiDBTestCase(ApiTestCase):
             scene = self.scene
         self.asset_instance = AssetInstance.create(
             asset_id=asset.id,
-            entity_id=scene.id,
-            entity_type_id=self.scene_type.id,
+            scene_id=scene.id,
             number=number,
             name=breakdown_service.build_asset_instance_name(
                 self.asset.id, number
@@ -557,6 +557,7 @@ class ApiDBTestCase(ApiTestCase):
             due_date=due_date,
             real_start_date=real_start_date
         )
+        return self.task
 
     def generate_fixture_task_standard(self):
         start_date = fields.get_date_object("2017-02-20")
@@ -622,6 +623,15 @@ class ApiDBTestCase(ApiTestCase):
             assigner_id=self.assigner.id
         )
 
+    def generate_fixture_comment(self):
+        self.comment = tasks_service.create_comment(
+            self.task.id,
+            self.task_status.id,
+            self.person.id,
+            "first comment"
+        )
+        return self.comment
+
     def generate_fixture_file_status(self):
         self.file_status = FileStatus.create(
             name="To review",
@@ -658,6 +668,7 @@ class ApiDBTestCase(ApiTestCase):
         name="main",
         representation="",
         asset_instance=None,
+        temporal_entity_id=None,
         task=None
     ):
         if output_type is None:
@@ -674,6 +685,8 @@ class ApiDBTestCase(ApiTestCase):
             asset_instance_id = None
         else:
             asset_instance_id = asset_instance.id
+            if temporal_entity_id is None:
+                temporal_entity_id = self.scene.id
 
         self.output_file = OutputFile.create(
             comment="",
@@ -685,6 +698,7 @@ class ApiDBTestCase(ApiTestCase):
             output_type_id=output_type.id,
             asset_instance_id=asset_instance_id,
             representation=representation,
+            temporal_entity_id=temporal_entity_id,
             name=name
         )
         return self.output_file

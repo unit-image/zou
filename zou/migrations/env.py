@@ -1,9 +1,13 @@
 from __future__ import with_statement
+
+import sqlalchemy_utils
+
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 from flask import current_app
 
+import sqlalchemy_utils
 import logging
 
 # this is the Alembic Config object, which provides

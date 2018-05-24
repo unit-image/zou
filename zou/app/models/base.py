@@ -50,6 +50,13 @@ class BaseMixin(object):
         return cls.query.filter_by(**kw).first()
 
     @classmethod
+    def get_all(cls):
+        """
+        Shorthand to retrieve all data for a model.
+        """
+        return cls.query.all()
+
+    @classmethod
     def get_all_by(cls, **kw):
         """
         Shorthand to retrieve data by using filters.
@@ -98,6 +105,7 @@ class BaseMixin(object):
         instance fields.
         """
         try:
+            self.updated_at = datetime.datetime.now()
             db.session.add(self)
             db.session.commit()
         except:
@@ -130,6 +138,7 @@ class BaseMixin(object):
         instance fields.
         """
         try:
+            self.updated_at = datetime.datetime.now()
             for key, value in data.items():
                 setattr(self, key, value)
             db.session.commit()
