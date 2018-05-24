@@ -231,7 +231,7 @@ class BaseModelResource(Resource):
             instance = self.get_model_or_404(instance_id)
             self.check_update_permissions(instance.serialize(), data)
             data = self.update_data(data)
-            stance.update(data)
+            instance.update(data)
             return instance.serialize(), 200
 
         except StatementError as exception:
