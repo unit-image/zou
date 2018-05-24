@@ -16,4 +16,5 @@ install:
   - "pip install -r requirements.txt"
 before_script:
   - psql -c 'create database zoudb;' -U postgres
+  - apt-get install deb-multimedia-keyring
 script: py.test
