@@ -15,6 +15,12 @@ class PersonsResource(BaseModelsResource):
     def __init__(self):
         BaseModelsResource.__init__(self, Person)
 
+    def all_entries(self, query=None):
+        if query is None:
+            query = self.model.query
+
+        return [person.serialize_safe() for person in query.all()]
+
     def post(self):
         abort(405)
 
@@ -49,3 +55,11 @@ class PersonResource(BaseModelResource):
             return True
         else:
             raise permissions.PermissionDenied
+
+    def update_data(self, data):
+        if "password" in data:
+            del data["password"]
+        return data
+
+    def serialize_instance(self, instance):
+        return instance.serialize_safe()
