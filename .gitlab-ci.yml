@@ -13,9 +13,10 @@ tests:python:
     POSTGRES_PASSWORD: mysecretpassword
     DB_HOST: postgres
   script:
-    # Update
-    - echo "deb http://www.deb-multimedia.org jessie main non-free" | tee -a /etc/apt/sources.list
-    - apt-get install deb-multimedia-keyring
+    - apt update
+    - wget http://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2016.8.1_all.deb
+    - dpkg -i deb-multimedia-keyring_2016.8.1_all.deb
+    - echo "deb http://www.deb-multimedia.org stretch main non-free" | tee -a /etc/apt/sources.list
     - apt update
     - apt install -y python-dev libpq-dev
     - apt install -y --force-yes ffmpeg
