@@ -8,6 +8,8 @@ from sqlalchemy.exc import IntegrityError, StatementError
 from zou.app.models.entity import Entity
 from zou.app.services import user_service
 
+from werkzeug.exceptions import NotFound
+
 from .base import BaseModelResource, BaseModelsResource
 
 
@@ -26,7 +28,9 @@ class EntityResource(BaseModelResource):
             "instance_casting",
             "project_id",
             "entities_in",
-            "entities_out"
+            "entities_out",
+            "type",
+            "shotgun_id"
         ]
 
     def check_read_permissions(self, entity):
@@ -50,18 +54,23 @@ class EntityResource(BaseModelResource):
             extra_data.update(data["data"])
             data["data"] = extra_data
             data = self.update_data(data)
-
             entity.update(data)
             return entity.serialize(), 200
 
-        except StatementError:
-            return {"error": "Wrong id format"}, 400
-        except TypeError as exception:
-            current_app.logger.error(str(exception))
-            return {"error": str(exception)}, 400
-        except IntegrityError as exception:
-            current_app.logger.error(str(exception))
-            return {"error": str(exception)}, 400
         except StatementError as exception:
             current_app.logger.error(str(exception))
-            return {"error": str(exception)}, 400
+            return {"error": True, "message": str(exception)}, 400
+        except TypeError as exception:
+            current_app.logger.error(str(exception))
+            return {"error": True, "message": str(exception)}, 400
+        except IntegrityError as exception:
+            current_app.logger.error(str(exception))
+            return {"error": True, "message": str(exception)}, 400
+        except StatementError as exception:
+            current_app.logger.error(str(exception))
+            return {"error": True, "message": str(exception)}, 400
+        except NotFound as exception:
+            return {"error": True, "message": str(exception)}, 404
+        except Exception as exception:
+            current_app.logger.error(str(exception))
+            return {"error": True, "message": str(exception)}, 400
