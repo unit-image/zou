@@ -1,4 +1,4 @@
-from flask import abort, request
+from flask import abort, request, current_app
 from flask_restful import Resource, reqparse
 from flask_jwt_extended import jwt_required
 
@@ -158,9 +158,42 @@ class TaskCommentsResource(Resource):
 
     @jwt_required
     def get(self, task_id):
+        task = tasks_service.get_task(task_id)
         if not permissions.has_manager_permissions():
-            user_service.check_has_task_related(task_id)
+            user_service.check_has_task_related(task["project_id"])
         return tasks_service.get_comments(task_id)
+
+
+class TaskCommentResource(Resource):
+    """
+    Remove given comment and update linked task accordingly.
+    """
+
+    @jwt_required
+    def delete(self, task_id, comment_id):
+        if not permissions.has_manager_permissions():
+            user_service.check_assigned(task_id)
+        comment = self.remove_comment_and_related(comment_id)
+        self.update_task_status(task_id)
+        return comment
+
+    def remove_comment_and_related(self, comment_id):
+        comment = tasks_service.get_comment(comment_id)
+        if comment["preview_file_id"] is not None:
+            files_service.delete_preview_file(comment["preview_file_id"])
+        notifs = notifications_service.delete_notifications_for_comment(comment["id"])
+        current_app.logger.info(notifs)
+        tasks_service.delete_comment(comment["id"])
+
+    def update_task_status(self, task_id):
+        tasks_service.get_task(task_id)
+        new_status_id = tasks_service.get_todo_status()["id"]
+        comments = tasks_service.get_comments(task_id)
+        if len(comments) > 0:
+            new_status_id = comments[0]["task_status_id"]
+        tasks_service.update_task(task_id, {
+            "task_status_id": new_status_id
+        })
 
 
 class PersonTasksResource(Resource):
