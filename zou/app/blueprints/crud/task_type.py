@@ -16,7 +16,9 @@ class TaskTypesResource(BaseModelsResource):
         name = data.get("name", None)
         task_type = TaskType.get_by(name=name)
         if task_type is not None:
-            raise ArgumentsException("A task with similar name already exists")
+            raise ArgumentsException(
+                "A task type with similar name already exists"
+            )
         return data
 
 
