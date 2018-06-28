@@ -264,7 +264,8 @@ class ToReviewResource(Resource):
                 task["id"],
                 person,
                 comment,
-                preview_path
+                preview_path,
+                change_status
             )
         except PersonNotFoundException:
             return {"error": True, "message": "Cannot find given person."}, 400
