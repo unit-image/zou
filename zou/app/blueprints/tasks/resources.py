@@ -240,7 +240,8 @@ class ToReviewResource(Resource):
             person_id,
             comment,
             name,
-            revision
+            revision,
+            change_status
         ) = self.get_arguments()
 
         try:
@@ -298,13 +299,15 @@ class ToReviewResource(Resource):
         parser.add_argument("comment", default="")
         parser.add_argument("name", default="main")
         parser.add_argument("revision", default=1, type=int)
+        parser.add_argument("change_status", default=True, type=bool)
         args = parser.parse_args()
 
         return (
             args["person_id"],
             args["comment"],
             args["name"],
-            args["revision"]
+            args["revision"],
+            args["change_status"]
         )
 
 
