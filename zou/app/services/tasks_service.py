@@ -791,7 +791,13 @@ def start_task(task_id):
     return task.serialize()
 
 
-def task_to_review(task_id, person, comment, preview_path=""):
+def task_to_review(
+    task_id,
+    person,
+    comment,
+    preview_path="",
+    change_status=True
+):
     """
     Change the task status to "waiting for approval" if it is not already the
     case. It emits a *task:to-review* event. Change the real start date time to
@@ -801,8 +807,9 @@ def task_to_review(task_id, person, comment, preview_path=""):
     to_review_status = get_to_review_status()
     task_dict_before = task.serialize()
 
-    task.update({"task_status_id": to_review_status["id"]})
-    task.save()
+    if change_status:
+        task.update({"task_status_id": to_review_status["id"]})
+        task.save()
 
     project = Project.get(task.project_id)
     entity = Entity.get(task.entity_id)
@@ -815,6 +822,7 @@ def task_to_review(task_id, person, comment, preview_path=""):
     task_dict_after["person"] = person
     task_dict_after["comment"] = comment
     task_dict_after["preview_path"] = preview_path
+    task_dict_after["change_status"] = change_status
 
     events.emit("task:to-review", {
         "task_before": task_dict_before,
