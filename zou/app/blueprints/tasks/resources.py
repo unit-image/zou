@@ -273,12 +273,8 @@ class ToReviewResource(Resource):
             person_id,
             comment,
             name,
-<<<<<<< 433a73c2f7d937752a21dcc38e1095e865aca0e5
             revision,
             change_status
-=======
-            revision
->>>>>>> Fix to review task resource
         ) = self.get_arguments()
 
         try:
@@ -344,12 +340,8 @@ class ToReviewResource(Resource):
             args["person_id"],
             args["comment"],
             args["name"],
-<<<<<<< 433a73c2f7d937752a21dcc38e1095e865aca0e5
             args["revision"],
             args["change_status"]
-=======
-            args["revision"]
->>>>>>> Fix to review task resource
         )
 
 

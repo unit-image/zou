@@ -843,7 +843,7 @@ def task_to_review(
     task_id,
     person,
     comment,
-    preview_path="",
+    preview_path={},
     change_status=True
 ):
     """
@@ -880,7 +880,8 @@ def task_to_review(
         "project_shotgun_id": project.shotgun_id,
         "person_shotgun_id": person["shotgun_id"],
         "comment": comment,
-        "preview_path": preview_path
+        "preview_path": preview_path,
+        "change_status": change_status
     })
 
     return task_dict_after
