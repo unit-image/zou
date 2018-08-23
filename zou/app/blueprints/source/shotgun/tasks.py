@@ -95,6 +95,19 @@ class ImportShotgunTasksResource(BaseImportShotgunResource):
             task.save()
             current_app.logger.info("Task created: %s" % task)
         else:
+            existing_task = Task.get_by(
+                name=data["name"],
+                project_id=data["project_id"],
+                task_type_id=data["task_type_id"],
+                entity_id=data["entity_id"]
+            )
+
+            if existing_task is not None:
+                del data["name"]
+                del data["project_id"]
+                del data["task_type_id"]
+                del data["entity_id"]
+
             task.update(data)
             current_app.logger.info("Task updated: %s" % task)
 
