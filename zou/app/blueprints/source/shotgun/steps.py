@@ -75,10 +75,9 @@ class ImportShotgunStepsResource(BaseImportShotgunResource):
                 department_id=data["department_id"]
             )
             if existing_task_type is not None:
-                del data["name"]
-                del data["for_entity"]
-                del data["departement_id"]
-
+                data.pop("name", None)
+                data.pop("for_entity", None)
+                data.pop("department_id", None)
             task_type.update(data)
             current_app.logger.info("Task Type updated: %s" % task_type)
         return task_type
