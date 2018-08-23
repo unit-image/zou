@@ -63,13 +63,22 @@ class ImportShotgunStepsResource(BaseImportShotgunResource):
                 name=data["name"],
                 for_entity=data["for_entity"]
             )
-            current_app.logger.error(task_type)
 
         if task_type is None:
             task_type = TaskType(**data)
             task_type.save()
             current_app.logger.info("Task Type created: %s" % task_type)
         else:
+            existing_task_type = TaskType.get_by(
+                name=data["name"],
+                for_entity=data["for_entity"],
+                department_id=data["department_id"]
+            )
+            if existing_task_type is not None:
+                del data["name"]
+                del data["for_entity"]
+                del data["departement_id"]
+
             task_type.update(data)
             current_app.logger.info("Task Type updated: %s" % task_type)
         return task_type
