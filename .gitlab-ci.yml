@@ -12,6 +12,7 @@ tests:python:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: mysecretpassword
     DB_HOST: postgres
+    MAIL_DEBUG: 1
   script:
     - apt update
     - wget http://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2016.8.1_all.deb
