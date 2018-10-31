@@ -31,6 +31,11 @@ class AssetInstance(db.Model, BaseMixin, SerializerMixin):
         db.ForeignKey('entity.id'),
         index=True
     )
+    target_asset_id = db.Column(
+        UUIDType(binary=False),
+        db.ForeignKey('entity.id'),
+        index=True
+    )
 
     # Do not use these column. They are deprecated and will be dropped in
     # upcoming version
@@ -46,15 +51,11 @@ class AssetInstance(db.Model, BaseMixin, SerializerMixin):
     __table_args__ = (
         db.UniqueConstraint(
             'asset_id',
+            'target_asset_id',
             'scene_id',
             'number',
             name='asset_instance_uc'
         ),
-        db.UniqueConstraint(
-            'scene_id',
-            'name',
-            name='asset_instance_name_uc'
-        )
     )
 
     # Do not use these column. They are deprecated and will be dropped in
