@@ -2,7 +2,7 @@ from flask import request
 from flask_restful import Resource, reqparse
 from flask_jwt_extended import jwt_required
 
-from zou.app.utils import query
+from zou.app.utils import query, permissions
 from zou.app.mixin import ArgsMixin
 from zou.app.services import (
     assets_service,
@@ -47,7 +47,10 @@ class AllAssetsResource(Resource):
         Adds project name and asset type name.
         """
         criterions = query.get_query_criterions_from_request(request)
-        user_service.check_project_access(criterions["project_id"])
+        if "project_id" in criterions:
+            user_service.check_project_access(criterions["project_id"])
+        else:
+            permissions.check_admin_permissions()
         return assets_service.get_assets(criterions)
 
 
