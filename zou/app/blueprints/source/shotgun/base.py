@@ -23,7 +23,6 @@ from zou.app.services.exception import (
 )
 
 from sqlalchemy.exc import IntegrityError, DataError
-from psycopg2 import IntegrityError as psy_IntegrityError
 
 
 class BaseImportShotgunResource(Resource):
@@ -51,12 +50,13 @@ class BaseImportShotgunResource(Resource):
                 current_app.logger.error(
                     "Your data is not properly formatted: %s" % sg_entry
                 )
-            except (IntegrityError, psy_IntegrityError) as exception:
+            except IntegrityError as exception:
                 current_app.logger.error(exception)
                 current_app.logger.error(
                     "Data information are duplicated or wrong: %s" %
                     sg_entry
                 )
+                raise
             except DataError as exception:
                 current_app.logger.error(exception)
                 current_app.logger.error(
