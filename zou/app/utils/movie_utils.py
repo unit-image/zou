@@ -1,6 +1,10 @@
 import os
 
-from moviepy.editor import VideoFileClip
+try:
+    from moviepy.editor import VideoFileClip
+except RuntimeError:
+    # raise ImportError("Failed to import imageio")
+    pass
 
 
 def save_file(tmp_folder, instance_id, file_to_save):
