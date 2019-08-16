@@ -1,5 +1,7 @@
-import os
 import flask_fs
+import logging
+import logstash
+import os
 
 from flask import Flask, jsonify
 from flask_restful import current_app
@@ -19,6 +21,25 @@ from zou.app.utils import cache
 
 app = Flask(__name__)
 app.config.from_object(config)
+
+if __name__ != '__main__':
+    # When gunicorn is used to run flask (production setup),
+    # We use the gunicorn.error log to configure flask application logging
+    # We add a logstash handler
+    handler = logstash.TCPLogstashHandler(config.LOGSTASH_HOST,
+                                          config.LOGSTASH_PORT,
+                                          version=1)
+
+    handler.setLevel(logging.DEBUG)
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    gunicorn_logger.addHandler(handler)
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
+    # Push gunicorn access log too (remove if too much information is pushed)
+    gunicorn_access_logger = logging.getLogger('gunicorn.access')
+    gunicorn_access_logger.addHandler(handler)
+
 
 if not app.config["FILE_TREE_FOLDER"]:
     # Default file_trees are included in Python package: use root_path
@@ -51,9 +72,11 @@ if config.DEBUG:
 def shutdown_session(exception=None):
     db.session.remove()
 
+
 @app.errorhandler(404)
 def page_not_found(error):
     return jsonify(error=404, text=str(error)), 404
+
 
 def configure_auth():
     from zou.app.services import persons_service
@@ -80,5 +103,6 @@ def load_api():
     api.configure(app)
     fs.mkdir_p(app.config["TMP_DIR"])
     configure_auth()
+
 
 load_api()

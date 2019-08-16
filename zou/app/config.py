@@ -89,3 +89,7 @@ FS_SWIFT_USER = os.getenv("FS_SWIFT_USER")
 FS_SWIFT_TENANT_NAME = os.getenv("FS_SWIFT_TENANT_NAME")
 FS_SWIFT_KEY = os.getenv("FS_SWIFT_KEY")
 FS_SWIFT_REGION_NAME = os.getenv("FS_SWIFT_REGION_NAME")
+
+# Logging
+LOGSTASH_HOST = os.getenv("LOGSTASH_HOST", 'logstash.unit.local')
+LOGSTASH_PORT = os.getenv("LOGSTASH_PORT", 5959)
