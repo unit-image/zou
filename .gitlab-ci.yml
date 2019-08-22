@@ -28,6 +28,7 @@ tests:python:
     - merge_requests
   except:
     refs:
+      - staging
       - master
       - tags
   tags:
