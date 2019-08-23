@@ -94,25 +94,50 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
         output_files = self.get(
             "/data/entities/%s/output-files/last-revisions" % self.asset.id
         )
+
         self.assertEqual(
-            output_files[str(self.geometry_id)]["main"],
-            self.output_file_geometry.serialize()
+            next(
+                f
+                for f in output_files
+                if f['output_type_id'] == str(self.output_file_geometry.output_type_id)
+            )['id'],
+            self.output_file_geometry.serialize()['id']
         )
         self.assertEqual(
-            output_files[str(self.cache_type_id)]["main"],
-            self.output_file_cache.serialize()
+            next(
+                f
+                for f in output_files
+                if f['output_type_id'] == str(self.output_file_cache.output_type_id)
+            )['id'],
+            self.output_file_cache.serialize()['id']
         )
         self.assertEqual(
-            output_files[str(self.tx_type_id)]["main"],
-            self.output_file_texture.serialize()
+            next(
+                f
+                for f in output_files
+                if f['output_type_id'] == str(self.output_file_texture.output_type_id)
+            )['id'],
+            self.output_file_texture.serialize()['id']
         )
         self.assertEqual(
-            output_files[str(self.render_id)]["main"],
-            self.output_file_render_1.serialize()
+            next(
+                f
+                for f in output_files
+                if (
+                    f['name'] == self.output_file_render_1.name
+                    and f['output_type_id'] == str(self.output_file_render_1.output_type_id))
+            )['id'],
+            self.output_file_render_1.serialize()['id']
         )
         self.assertEqual(
-            output_files[str(self.render_id)]["variant-1"],
-            self.output_file_render_2.serialize()
+            next(
+                f
+                for f in output_files
+                if (
+                    f['name'] == "variant-1"
+                    and f['output_type_id'] == str(self.output_file_render_2.output_type_id))
+            )['id'],
+            self.output_file_render_2.serialize()['id']
         )
 
     def test_get_entity_output_types(self):
@@ -502,7 +527,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             )
         )
         self.assertEquals(
-            result[self.cache_type_id]["main"]["id"],
+            result[0]["id"],
             output_file["id"]
         )
 
@@ -620,10 +645,9 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             )
         )
         self.assertEquals(
-            result[self.tx_type_id]["main"]["id"],
+            result[0]["id"],
             output_file["id"]
         )
-
 
     def test_get_output_types(self):
         self.generate_fixture_scene()

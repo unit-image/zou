@@ -18,7 +18,6 @@ from .utils import fs
 
 from zou.app.utils import cache
 
-
 app = Flask(__name__)
 app.config.from_object(config)
 

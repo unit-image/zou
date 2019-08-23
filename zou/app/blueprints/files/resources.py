@@ -5,7 +5,6 @@ from flask_restful import Resource, reqparse
 from flask_jwt_extended import jwt_required
 
 from zou.app.mixin import ArgsMixin
-from zou.app.utils import permissions
 from zou.app.services import (
     file_tree_service,
     files_service,
@@ -771,15 +770,31 @@ class GetNextInstanceOutputFileRevisionResource(Resource, ArgsMixin):
 
 class LastEntityOutputFilesResource(Resource):
     """
-    Last revisions of output files for given entity grouped by output type
-    and file name.
+    Last revisions of output files for given entity matching the given params.
+
+    criterias are:
+    - task_type_id
+    - output_type_id
+    - name
+    - representation
     """
 
     @jwt_required
     def get(self, entity_id):
         entity = entities_service.get_entity(entity_id)
         user_service.check_project_access(entity["project_id"])
-        return files_service.get_last_output_files_for_entity(entity["id"])
+
+        task_type_id = request.args.get("task_type_id")
+        output_type_id = request.args.get("output_type_id")
+        name = request.args.get("name")
+        representation = request.args.get("representation")
+
+        return files_service.get_last_output_files_for_entity(
+            entity["id"],
+            task_type_id=task_type_id,
+            output_type_id=output_type_id,
+            name=name,
+            representation=representation)
 
 
 class LastInstanceOutputFilesResource(Resource):
@@ -793,10 +808,19 @@ class LastInstanceOutputFilesResource(Resource):
         asset_instance = assets_service.get_asset_instance(asset_instance_id)
         entity = entities_service.get_entity(asset_instance["asset_id"])
         user_service.check_project_access(entity["project_id"])
+
+        task_type_id = request.args.get("task_type_id")
+        output_type_id = request.args.get("output_type_id")
+        name = request.args.get("name")
+        representation = request.args.get("representation")
+
         return files_service.get_last_output_files_for_instance(
             asset_instance["id"],
             temporal_entity_id,
-        )
+            task_type_id=task_type_id,
+            output_type_id=output_type_id,
+            name=name,
+            representation=representation)
 
 
 class EntityOutputTypesResource(Resource):

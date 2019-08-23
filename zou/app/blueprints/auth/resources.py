@@ -153,7 +153,9 @@ class LoginResource(Resource):
     """
 
     def post(self):
+
         (email, password) = self.get_arguments()
+
         try:
             user = auth_service.check_auth(app, email, password)
             access_token = create_access_token(identity=user["email"])
