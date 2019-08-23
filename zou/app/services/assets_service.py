@@ -58,10 +58,11 @@ def build_entity_type_asset_type_filter():
     ])
 
 
-def get_assets(criterions={}):
+def get_assets(criterions=None):
     """
     Get all assets for given criterions.
     """
+    criterions = criterions or {}
     query = Entity.query \
         .filter(build_asset_type_filter())
     query = query_utils.apply_criterions_to_db_query(Entity, query, criterions)
@@ -69,11 +70,12 @@ def get_assets(criterions={}):
     return EntityType.serialize_list(result, obj_type="Asset")
 
 
-def get_full_assets(criterions={}):
+def get_full_assets(criterions=None):
     """
     Get all assets for given criterions with additional informations: project
     name and asset type name.
     """
+    criterions = criterions or {}
     query = Entity.query \
         .filter_by(**criterions) \
         .filter(build_asset_type_filter()) \
@@ -91,10 +93,11 @@ def get_full_assets(criterions={}):
     return assets
 
 
-def get_assets_and_tasks(criterions={}, page=1):
+def get_assets_and_tasks(criterions=None, page=1):
     """
     Get all assets for given criterions with related tasks for each asset.
     """
+    criterions = criterions or {}
     asset_map = {}
     task_map = {}
 
@@ -171,10 +174,11 @@ def get_assets_and_tasks(criterions={}, page=1):
     return list(asset_map.values())
 
 
-def get_asset_types(criterions={}):
+def get_asset_types(criterions=None):
     """
     Retrieve all asset types available.
     """
+    criterions = criterions or {}
     query = EntityType.query \
         .filter(build_entity_type_asset_type_filter())
     query = query_utils.apply_criterions_to_db_query(Entity, query, criterions)

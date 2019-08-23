@@ -49,10 +49,11 @@ def get_camera_type():
     return entities_service.get_entity_type_by_name("Camera")
 
 
-def get_episodes(criterions={}):
+def get_episodes(criterions=None):
     """
     Get all episodes for given criterions.
     """
+    criterions = criterions or {}
     episode_type = get_episode_type()
     criterions["entity_type_id"] = episode_type["id"]
     query = Entity.query.order_by(Entity.name)
@@ -60,10 +61,11 @@ def get_episodes(criterions={}):
     return Entity.serialize_list(query.all(), obj_type="Episode")
 
 
-def get_sequences(criterions={}):
+def get_sequences(criterions=None):
     """
     Get all sequences for given criterions.
     """
+    criterions = criterions or {}
     sequence_type = get_sequence_type()
     criterions["entity_type_id"] = sequence_type["id"]
     query = Entity.query.order_by(Entity.name)
@@ -71,10 +73,11 @@ def get_sequences(criterions={}):
     return Entity.serialize_list(query.all(), obj_type="Sequence")
 
 
-def get_shots(criterions={}):
+def get_shots(criterions=None):
     """
     Get all shots for given criterions.
     """
+    criterions = criterions or {}
     shot_type = get_shot_type()
     criterions["entity_type_id"] = shot_type["id"]
     Sequence = aliased(Entity, name='sequence')
@@ -97,10 +100,11 @@ def get_shots(criterions={}):
     return shots
 
 
-def get_scenes(criterions={}):
+def get_scenes(criterions=None):
     """
     Get all scenes for given criterions.
     """
+    criterions = criterions or {}
     scene_type = get_scene_type()
     criterions["entity_type_id"] = scene_type["id"]
     Sequence = aliased(Entity, name='sequence')
@@ -123,10 +127,11 @@ def get_scenes(criterions={}):
     return scenes
 
 
-def get_episode_map(criterions={}):
+def get_episode_map(criterions=None):
     """
     Returns a dict where keys are episode_id and values are episodes.
     """
+    criterions = criterions or {}
     episodes = get_episodes(criterions)
     episode_map = {}
     for episode in episodes:
@@ -134,10 +139,11 @@ def get_episode_map(criterions={}):
     return episode_map
 
 
-def get_shots_and_tasks(criterions={}):
+def get_shots_and_tasks(criterions=None):
     """
     Get all shots for given criterions with related tasks for each shot.
     """
+    criterions = criterions or {}
     shot_type = get_shot_type()
     shot_map = {}
     task_map = {}
@@ -224,10 +230,11 @@ def get_shots_and_tasks(criterions={}):
     return list(shot_map.values())
 
 
-def get_entities_and_tasks(criterions={}):
+def get_entities_and_tasks(criterions=None):
     """
     Get all entities for given criterions with related tasks for each entity.
     """
+    criterions = criterions or {}
     entity_map = {}
     task_map = {}
 
