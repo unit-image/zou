@@ -487,6 +487,8 @@ def get_last_output_files_for_entity(
         OutputFile.name,
         OutputFile.representation
     )
+    query = query.filter(OutputFile.entity_id == entity_id)
+    query = query.filter(OutputFile.asset_instance_id == None)
     statement = query.subquery()
 
     # Create a join query to retrieve maximum revision and filter by
@@ -502,8 +504,6 @@ def get_last_output_files_for_entity(
     )
 
     # Filter by specified arguments
-    query = query.filter(OutputFile.entity_id == entity_id)
-    query = query.filter(OutputFile.asset_instance_id == None)
     if task_type_id:
         query = query.filter(OutputFile.task_type_id == task_type_id)
     if output_type_id:
@@ -512,6 +512,8 @@ def get_last_output_files_for_entity(
         query = query.filter(OutputFile.name == name)
     if representation:
         query = query.filter(OutputFile.representation == representation)
+
+    query = query.filter(OutputFile.entity_id == entity_id)
 
     # query
     output_files = query.all()
@@ -543,6 +545,8 @@ def get_last_output_files_for_instance(
         OutputFile.name,
         OutputFile.representation
     )
+    query = query.filter(OutputFile.asset_instance_id == asset_instance_id)
+    query = query.filter(OutputFile.temporal_entity_id == temporal_entity_id)
     statement = query.subquery()
 
     # Create a join query to retrieve maximum revision

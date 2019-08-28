@@ -25,7 +25,7 @@ tests:python:
     # Run Tests
     - PYTHONPATH=. py.test
   only:
-    - merge_requests
+    - pushes
   except:
     refs:
       - staging
