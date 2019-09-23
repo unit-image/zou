@@ -23,7 +23,7 @@ class StatusResource(Resource):
         is_db_up = True
         try:
             projects_service.get_open_status()
-        except:
+        except Exception:
             is_db_up = False
 
         is_kv_up = True
@@ -40,8 +40,10 @@ class StatusResource(Resource):
 
         is_es_up = True
         try:
-            requests.get("http://localhost:%s" % config.EVENT_STREAM_PORT)
-        except:
+            requests.get("http://{host}:{port}".format(
+                host=config.EVENT_STREAM_HOST,
+                port=config.EVENT_STREAM_PORT))
+        except Exception:
             is_es_up = False
 
         return {
