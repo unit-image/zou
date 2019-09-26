@@ -1,8 +1,8 @@
 import os
 import sys
+import traceback
 
 from zou.app.utils import events, api as api_utils
-
 from flask import Blueprint
 
 from .blueprints.assets import blueprint as assets_blueprint
@@ -66,8 +66,8 @@ def register_event_handlers(app):
         events.register_all(event_handlers.event_map)
     except ImportError:
         # Event handlers folder is not properly configured.
-        # Handlers are optional, that's why this error is ignored.
-        pass
+        # Handlers are optional, that's why this error is non-blocking.
+        app.logger.error(traceback.format_exc())
     return app
 
 

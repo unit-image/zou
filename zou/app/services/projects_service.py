@@ -44,7 +44,6 @@ def get_projects_with_first_episode(query):
                     fields.serialize_value(first_episode.id)
         projects.append(project_dict)
 
-
     return projects
 
 
