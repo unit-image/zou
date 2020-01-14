@@ -35,10 +35,6 @@ if __name__ != '__main__':
     app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
 
-    # Push gunicorn access log too (remove if too much information is pushed)
-    gunicorn_access_logger = logging.getLogger('gunicorn.access')
-    gunicorn_access_logger.addHandler(handler)
-
 
 if not app.config["FILE_TREE_FOLDER"]:
     # Default file_trees are included in Python package: use root_path
