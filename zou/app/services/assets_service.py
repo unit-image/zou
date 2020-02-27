@@ -354,8 +354,6 @@ def get_full_asset(asset_id):
         asset["project_name"] = project.name
         asset["asset_type_id"] = asset_type["id"]
         asset["asset_type_name"] = asset_type["name"]
-        del asset["source_id"]
-        del asset["nb_frames"]
         asset.update(assets[0])
         return asset
     else:
