@@ -274,7 +274,7 @@ def create_new_output_revision(
     return output_file.serialize()
 
 
-def get_working_files_for_task(task_id):
+def get_working_files_for_task(task_id, relations=False):
     """
     Retrieve all working files for a given task ordered by revision from
     biggest to smallest revision.
@@ -285,7 +285,7 @@ def get_working_files_for_task(task_id):
         .order_by(desc(WorkingFile.revision))
         .all()
     )
-    return fields.serialize_models(working_files)
+    return fields.serialize_models(working_files, relations=relations)
 
 
 def get_working_files_for_entity(entity_id, task_id=None, name=None):

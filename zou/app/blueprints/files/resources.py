@@ -247,9 +247,16 @@ class TaskWorkingFilesResource(Resource):
     @jwt_required
     def get(self, task_id):
         result = {}
+
         task = tasks_service.get_task(task_id)
         user_service.check_project_access(task["project_id"])
-        result = files_service.get_working_files_for_task(task["id"])
+
+        options = request.args
+        relations = options.get("relations", "false").lower() == "true"
+
+        result = files_service.get_working_files_for_task(
+            task["id"],
+            relations=relations)
 
         return result
 
