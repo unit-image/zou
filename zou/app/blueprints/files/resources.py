@@ -784,17 +784,13 @@ class LastEntityOutputFilesResource(Resource):
         entity = entities_service.get_entity(entity_id)
         user_service.check_project_access(entity["project_id"])
 
-        task_type_id = request.args.get("task_type_id")
-        output_type_id = request.args.get("output_type_id")
-        name = request.args.get("name")
-        representation = request.args.get("representation")
-
         return files_service.get_last_output_files_for_entity(
             entity["id"],
-            task_type_id=task_type_id,
-            output_type_id=output_type_id,
-            name=name,
-            representation=representation)
+            output_type_id=request.args.get("output_type_id", None),
+            task_type_id=request.args.get("task_type_id", None),
+            representation=request.args.get("representation", None),
+            file_status_id=request.args.get("file_status_id", None)
+        )
 
 
 class LastInstanceOutputFilesResource(Resource):
@@ -809,18 +805,14 @@ class LastInstanceOutputFilesResource(Resource):
         entity = entities_service.get_entity(asset_instance["asset_id"])
         user_service.check_project_access(entity["project_id"])
 
-        task_type_id = request.args.get("task_type_id")
-        output_type_id = request.args.get("output_type_id")
-        name = request.args.get("name")
-        representation = request.args.get("representation")
-
         return files_service.get_last_output_files_for_instance(
             asset_instance["id"],
             temporal_entity_id,
-            task_type_id=task_type_id,
-            output_type_id=output_type_id,
-            name=name,
-            representation=representation)
+            output_type_id=request.args.get("output_type_id", None),
+            task_type_id=request.args.get("task_type_id", None),
+            representation=request.args.get("representation", None),
+            file_status_id=request.args.get("file_status_id", None)
+        )
 
 
 class EntityOutputTypesResource(Resource):
@@ -910,15 +902,16 @@ class EntityOutputFilesResource(Resource):
         output_type_id = request.args.get("output_type_id")
         name = request.args.get("name")
         representation = request.args.get("representation")
+        file_status_id = request.args.get("file_status_id")
 
-        return \
-            files_service.get_output_files_for_entity(
-                entity['id'],
-                task_type_id=task_type_id,
-                output_type_id=output_type_id,
-                name=name,
-                representation=representation
-            )
+        return files_service.get_output_files_for_entity(
+            entity["id"],
+            task_type_id=task_type_id,
+            output_type_id=output_type_id,
+            name=name,
+            representation=representation,
+            file_status_id=file_status_id,
+        )
 
 
 class InstanceOutputFilesResource(Resource):
@@ -937,16 +930,17 @@ class InstanceOutputFilesResource(Resource):
         output_type_id = request.args.get("output_type_id")
         name = request.args.get("name")
         representation = request.args.get("representation")
+        file_status_id = request.args.get("file_status_id")
 
-        return \
-            files_service.get_output_files_for_instance(
-                asset_instance['id'],
-                temporal_entity_id=temporal_entity_id,
-                task_type_id=task_type_id,
-                output_type_id=output_type_id,
-                name=name,
-                representation=representation
-            )
+        return files_service.get_output_files_for_instance(
+            asset_instance["id"],
+            temporal_entity_id=temporal_entity_id,
+            task_type_id=task_type_id,
+            output_type_id=output_type_id,
+            name=name,
+            representation=representation,
+            file_status_id=file_status_id,
+        )
 
 
 class FileResource(Resource):
