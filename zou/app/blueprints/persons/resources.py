@@ -112,7 +112,8 @@ class TimeSpentsResource(Resource):
 
     @jwt_required
     def get(self, person_id, date):
-        permissions.check_admin_permissions()
+        # permissions.check_admin_permissions()
+        permissions.check_manager_permissions()
         try:
             return time_spents_service.get_time_spents(person_id, date)
         except WrongDateFormatException:
