@@ -1,6 +1,9 @@
+import collections
 import datetime
 import re
 import uuid
+
+from flask import current_app, request
 
 from sqlalchemy.exc import StatementError, IntegrityError, DataError
 from sqlalchemy.orm import aliased
@@ -8,6 +11,7 @@ from sqlalchemy.orm import aliased
 from zou.app import app
 from zou.app.utils import events
 
+from zou.app.models.attachment_file import AttachmentFile
 from zou.app.models.comment import Comment
 from zou.app.models.department import Department
 from zou.app.models.entity import Entity
@@ -21,7 +25,8 @@ from zou.app.models.task_type import TaskType
 from zou.app.models.task_status import TaskStatus
 from zou.app.models.time_spent import TimeSpent
 
-from zou.app.utils import cache, fields, query as query_utils
+from zou.app.utils import cache, fields, fs, query as query_utils
+from zou.app.stores import file_store
 
 from zou.app.services.exception import (
     CommentNotFoundException,
@@ -201,47 +206,47 @@ def get_task_by_shotgun_id(shotgun_id):
     return task.serialize()
 
 
-def get_tasks_for_shot(shot_id):
+def get_tasks_for_shot(shot_id, relations=False):
     """
     Get all tasks for given shot.
     """
     shot = shots_service.get_shot(shot_id)
-    return get_task_dicts_for_entity(shot["id"])
+    return get_task_dicts_for_entity(shot["id"], relations=relations)
 
 
-def get_tasks_for_scene(scene_id):
+def get_tasks_for_scene(scene_id, relations=False):
     """
     Get all tasks for given scene.
     """
     scene = shots_service.get_scene(scene_id)
-    return get_task_dicts_for_entity(scene["id"])
+    return get_task_dicts_for_entity(scene["id"], relations=relations)
 
 
-def get_tasks_for_sequence(sequence_id):
+def get_tasks_for_sequence(sequence_id, relations=False):
     """
     Get all tasks for given sequence.
     """
     sequence = shots_service.get_sequence(sequence_id)
-    return get_task_dicts_for_entity(sequence["id"])
+    return get_task_dicts_for_entity(sequence["id"], relations=relations)
 
 
-def get_tasks_for_asset(asset_id):
+def get_tasks_for_asset(asset_id, relations=False):
     """
     Get all tasks for given asset.
     """
     asset = assets_service.get_asset_raw(asset_id)
-    return get_task_dicts_for_entity(asset.id)
+    return get_task_dicts_for_entity(asset.id, relations=relations)
 
 
-def get_tasks_for_episode(episode_id):
+def get_tasks_for_episode(episode_id, relations=False):
     """
     Get all tasks for given episode.
     """
     episode = shots_service.get_episode_raw(episode_id)
-    return get_task_dicts_for_entity(episode.id)
+    return get_task_dicts_for_entity(episode.id, relations=relations)
 
 
-def get_task_dicts_for_entity(entity_id):
+def get_task_dicts_for_entity(entity_id, relations=False):
     """
     Return all tasks related to given entity. Add extra information like
     project name, task type name, etc.
@@ -274,7 +279,7 @@ def get_task_dicts_for_entity(entity_id):
             entity_name,
         ) = entry
 
-        task = task_object.serialize()
+        task = task_object.serialize(relations=relations)
         task["project_name"] = project_name
         task["task_type_name"] = task_type_name
         task["task_status_name"] = task_status_name
@@ -371,10 +376,11 @@ def get_time_spents(task_id):
     """
     Return time spents for given task.
     """
-    result = {"total": 0}
+    result = collections.defaultdict(list)
+    result["total"] = 0
     time_spents = TimeSpent.query.filter_by(task_id=task_id).all()
     for time_spent in time_spents:
-        result[str(time_spent.person_id)] = time_spent.serialize()
+        result[str(time_spent.person_id)].append(time_spent.serialize())
         result["total"] += time_spent.duration
     return result
 
@@ -428,6 +434,9 @@ def get_comments(task_id, is_client=False, is_manager=False):
             "color": task_status_color,
             "id": str(comment.task_status_id),
         }
+        comment_dict["acknowledgements"] = []
+        for person in comment.acknowledgements:
+            comment_dict["acknowledgements"].append(str(person.id))
 
         if comment.preview_file_id is not None:
             # Legacy stuff, should not be used anymore.
@@ -452,6 +461,15 @@ def get_comments(task_id, is_client=False, is_manager=False):
                         "annotations": preview.annotations,
                     }
                 )
+        comment_dict["attachment_files"] = []
+        for attachment_file in comment.attachment_files:
+            comment_dict["attachment_files"].append({
+                "id": str(attachment_file.id),
+                "name": attachment_file.name,
+                "extension": attachment_file.extension,
+                "size": attachment_file.size
+            })
+
         comments.append(comment_dict)
     return comments
 
@@ -494,7 +512,8 @@ def get_comment_by_preview_file_id(preview_file_id):
 
 
 def create_comment(
-    object_id, task_status_id, person_id, text, object_type="Task"
+    object_id, task_status_id, person_id, text,
+    object_type="Task", files={}, checklist=[]
 ):
     """
     Create a new comment for given object (by default, it considers this object
@@ -506,10 +525,17 @@ def create_comment(
         task_status_id=task_status_id,
         person_id=person_id,
         mentions=get_comment_mentions(object_id, text),
+        checklist=checklist,
         text=text,
     )
-    events.emit("comment:new", {"comment_id": comment.id})
-    return comment.serialize(relations=True)
+    comment = comment.serialize(relations=True)
+    if "file" in files:
+        uploaded_file = files["file"]
+        attachment_file = create_attachment(comment, uploaded_file)
+        comment["attachment_files"] = [attachment_file]
+
+    events.emit("comment:new", {"comment_id": comment["id"]})
+    return comment
 
 
 def get_comment_mentions(object_id, text):
@@ -784,7 +810,7 @@ def update_task_status(task_status_id, data):
     task_status = get_task_status_raw(task_status_id)
     task_status.update(data)
     clear_task_status_cache(task_status_id)
-    events.emit("task_status:update", {"task_status_id": task_status_id})
+    events.emit("task-status:update", {"task_status_id": task_status_id})
     return task_status.serialize()
 
 
@@ -1097,3 +1123,90 @@ def get_full_task(task_id):
             task["episode"] = episode
 
     return task
+
+
+def reset_tasks_data(project_id):
+    for task in Task.get_all_by(project_id=project_id):
+        reset_task_data(str(task.id))
+
+
+def reset_task_data(task_id):
+    clear_task_cache(task_id)
+    task = Task.get(task_id)
+    retake_count = 0
+    real_start_date = None
+    last_comment_date = None
+    end_date = None
+    task_status_id = TaskStatus.get_by(short_name="todo").id
+    comments = (
+        Comment.query.join(TaskStatus)
+        .filter(Comment.object_id == task_id)
+        .order_by(Comment.created_at)
+        .add_columns(
+            TaskStatus.is_retake, TaskStatus.is_done, TaskStatus.short_name
+        )
+        .all()
+    )
+
+    previous_is_retake = False
+    for (
+        comment,
+        task_status_is_retake,
+        task_status_is_done,
+        task_status_short_name,
+    ) in comments:
+        if task_status_is_retake and not previous_is_retake:
+            retake_count += 1
+        previous_is_retake = task_status_is_retake
+
+        if task_status_short_name.lower() == "wip" and real_start_date is None:
+            real_start_date = comment.created_at
+
+        if task_status_is_done:
+            end_date = comment.created_at
+        else:
+            end_date = None
+
+        task_status_id = comment.task_status_id
+        last_comment_date = comment.created_at
+
+    duration = 0
+    time_spents = TimeSpent.get_all_by(task_id=task.id)
+    for time_spent in time_spents:
+        duration += time_spent.duration
+
+    task.update(
+        {
+            "duration": duration,
+            "retake_count": retake_count,
+            "real_start_date": real_start_date,
+            "last_comment_date": last_comment_date,
+            "end_date": end_date,
+            "task_status_id": task_status_id,
+        }
+    )
+    events.emit("task:update", {"task_id": task.id})
+    return task.serialize()
+
+
+def create_attachment(comment, uploaded_file):
+    tmp_folder = current_app.config["TMP_DIR"]
+    uploaded_file = request.files["file"]
+    filename = uploaded_file.filename
+    mimetype = uploaded_file.mimetype
+    extension = fs.get_file_extension(filename)
+
+    attachment_file = AttachmentFile.create(
+        name=filename,
+        size=0,
+        extension=extension,
+        mimetype=mimetype,
+        comment_id=comment["id"]
+    )
+    attachment_file_id = str(attachment_file.id)
+
+    tmp_file_path = fs.save_file(tmp_folder, attachment_file_id, uploaded_file)
+    size = fs.get_file_size(tmp_file_path)
+    attachment_file.update({"size": size})
+    file_store.add_file("attachments", attachment_file_id, tmp_file_path)
+    return attachment_file.present()

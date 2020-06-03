@@ -303,15 +303,21 @@ def sync_with_ldap_server():
     update_person_list_with_ldap_users(ldap_users)
 
 
-def import_data_from_another_instance(target, login, password, project=None):
+def import_data_from_another_instance(
+    target,
+    login,
+    password,
+    project=None,
+    with_events=False
+):
     """
     Retrieve and save all the data from another API instance. It doesn't
     change the IDs.
     """
     sync_service.init(target, login, password)
-    sync_service.run_main_data_sync(project=project)
+    # sync_service.run_main_data_sync(project=project)
     sync_service.run_project_data_sync(project=project)
-    sync_service.run_other_sync(project=project)
+    # sync_service.run_other_sync(project=project)
 
 
 def run_sync_change_daemon(event_target, target, login, password, logs_dir):
@@ -407,3 +413,14 @@ def upload_files_to_cloud_storage(days):
 
 def reset_tasks_data(project_id):
     deletion_service.reset_tasks_data(project_id)
+
+
+def remove_old_data(days_old=90):
+    print("Start removing non critical data older than %s." % days_old)
+    print("Removing old events...")
+    deletion_service.remove_old_events(days_old)
+    print("Removing old login logs...")
+    deletion_service.remove_old_login_logs(days_old)
+    print("Removing old notitfications...")
+    deletion_service.remove_old_notifications(days_old)
+    print("Old data removed.")

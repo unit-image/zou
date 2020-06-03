@@ -31,7 +31,7 @@ from zou.app.models.task_status import TaskStatus
 from zou.app.models.task_type import TaskType
 from zou.app.models.time_spent import TimeSpent
 
-from zou.app.services import deletion_service
+from zou.app.services import deletion_service, tasks_service
 from zou.app.stores import file_store
 from flask_fs.backends.local import LocalBackend
 from zou.app.utils import events
@@ -250,12 +250,13 @@ def run_project_data_sync(project=None):
         logger.info("Sync of %s complete." % project["name"])
 
 
-def run_other_sync(project=None):
+def run_other_sync(project=None, with_events=False):
     """
     Retrieve and import all search filters and events from target instance.
     """
     sync_entries("search-filters", SearchFilter, project=project)
-    sync_entries("events", ApiEvent, project=project)
+    if with_events:
+        sync_entries("events", ApiEvent, project=project)
 
 
 def run_last_events_sync(minutes=0, page_size=300):
@@ -347,7 +348,9 @@ def sync_entries(model_name, model, project=None):
         if model_name == 'projects':
             instances = [gazu.client.fetch_one(model_name, project.get('id'))]
         elif model_name in 'search-filters':
-            instances = gazu.client.fetch_all(model_name, params=dict(project_id=project.get('id')))
+            instances = gazu.client.fetch_all(
+                model_name, params=dict(project_id=project.get('id'))
+            )
         else:
             instances = gazu.client.fetch_all(model_name)
         model.create_from_import_list(instances)
@@ -375,22 +378,35 @@ def sync_project_entries(project, model_name, model):
     page = 1
     init = True
     results = {"nb_pages": 2}
-
+    result_length = 1
     if model_name not in [
         "tasks",
         "comments",
+        "news",
         "notifications",
         "playlists",
         "preview-files",
     ]:  # not much data we retrieve all in a single request.
-        results = gazu.client.fetch_all(
-            "projects/%s/%s" % (project["id"], model_name)
-        )
+        path = "projects/%s/%s" % (project["id"], model_name)
+        results = gazu.client.fetch_all(path)
         instances += results
         try:
             model.create_from_import_list(instances)
         except sqlalchemy.exc.IntegrityError:
             logger.error("An error occured", exc_info=1)
+
+    elif model_name == "news":
+        while init or result_length > 0:
+            path = "projects/%s/%s?page=%d" % (project["id"], model_name, page)
+            results = gazu.client.fetch_all(path)
+            instances += results
+            try:
+                model.create_from_import_list(results)
+            except sqlalchemy.exc.IntegrityError:
+                logger.error("An error occured", exc_info=1)
+            result_length = len(results)
+            page += 1
+            init = False
 
     else:  # Lot of data, we retrieve all through paginated requests.
         while init or results["nb_pages"] >= page:
@@ -527,7 +543,8 @@ def delete_entry(model_name, event_name, model):
             return
         model_id = data[event_name.replace("-", "_") + "_id"]
         if event_name == "comment":
-            deletion_service.remove_comment(model_id)
+            comment = deletion_service.remove_comment(model_id)
+            tasks_service.reset_task_data(comment["object_id"])
         else:
             model.delete_all_by(id=model_id)
         forward_base_event(event_name, "delete", data)
@@ -717,10 +734,12 @@ def download_files_from_another_instance(project=None):
     download_thumbnails_from_another_instance("project", project=project)
 
     if project:
-        project = gazu.project.get_project_by_name(project)
-        preview_files = []
-        for task in gazu.client.get('/data/projects/%s/tasks' % project.get('id')):
-            preview_files += PreviewFile.query.filter_by(task_id=task.get('id'))
+        project_dict = gazu.project.get_project_by_name(project)
+        preview_files = PreviewFile \
+            .query \
+            .join(Task) \
+            .filter(Task.project_id == project_dict["id"]) \
+            .all()
     else:
         preview_files = PreviewFile.query.all()
 
@@ -733,7 +752,7 @@ def download_thumbnails_from_another_instance(model_name, project=None):
     Download all thumbnails from target instance for given model.
     """
     model = event_name_model_map[model_name]
-    
+
     if project is None:
         instances = model.query.all()
     else:
@@ -749,27 +768,27 @@ def download_thumbnail_from_another_instance(model_name, model_id):
     """
     Download into the local storage the thumbnail for a given model instance.
     """
-    file_path = local_picture.path("thumbnails-%s" % str(model_id))
-    dirname = os.path.dirname(file_path)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    path = "/pictures/thumbnails/%ss/%s.png" % (model_name, model_id)
-    try:
-        gazu.client.download(path, file_path)
-        print("%s downloaded" % file_path)
-    except Exception as e:
-        print(e)
-        print("%s download failed" % file_path)
-    return path
+    from zou.app import app
+    with app.app_context():
+        file_path = "/tmp/thumbnails-%s.png" % str(model_id)
+        path = "/pictures/thumbnails/%ss/%s.png" % (model_name, model_id)
+        try:
+                gazu.client.download(path, file_path)
+                file_store.add_picture("thumbnails", model_id, file_path)
+                os.remove(file_path)
+                print("%s downloaded" % file_path)
+        except Exception as e:
+            print(e)
+            print("%s download failed" % file_path)
+        return path
 
 
 def download_preview_from_another_instance(preview_file):
     """
     Download all files link to preview file entry: orginal file and variants.
     """
-    from zou.app import app
 
+    from zou.app import app
     print(
         "download preview %s (%s)" % (preview_file.id, preview_file.extension)
     )
@@ -778,33 +797,30 @@ def download_preview_from_another_instance(preview_file):
     is_file = not is_movie and not is_picture
 
     preview_file_id = str(preview_file.id)
-    file_key = "previews-%s" % preview_file_id
+    save_func = file_store.add_file
     with app.app_context():
         if is_file:
-            file_path = local_file.path(file_key)
+            save_func = file_store.add_file
             exists_func = file_store.exists_file
         elif is_movie:
-            file_path = local_movie.path(file_key)
-            exists_func = file_store.exists_picture
-        else:
-            file_path = local_picture.path(file_key)
+            save_func = file_store.add_movie
             exists_func = file_store.exists_movie
+        else:
+            save_func = file_store.add_picture
+            exists_func = file_store.exists_picture
 
         if is_movie or is_picture:
             for prefix in ["thumbnails", "thumbnails-square", "original"]:
-                pic_file_path = local_picture.path(
-                    "%s-%s" % (prefix, str(preview_file.id))
-                )
                 if not exists_func(prefix, preview_file_id):
                     download_file_from_another_instance(
-                        pic_file_path,
+                        file_store.add_picture,
                         prefix,
                         preview_file_id,
                         preview_file.extension
                     )
         if not exists_func("previews", preview_file_id):
             download_file_from_another_instance(
-                file_path,
+                save_func,
                 "previews",
                 preview_file_id,
                 preview_file.extension
@@ -812,20 +828,17 @@ def download_preview_from_another_instance(preview_file):
 
 
 def download_file_from_another_instance(
-    file_path, prefix, preview_file_id, extension
+    save_func, prefix, preview_file_id, extension
 ):
     """
     Download preview file for given preview from object storage and store it
     locally.
     """
-    dirname = os.path.dirname(file_path)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
     if prefix == "previews":
         if extension == "mp4":
-            path = "/movies/originals/preview-files/%s.mp4" % preview_file_id
+            path = "/movies/original/preview-files/%s.mp4" % preview_file_id
         else:
-            path = "/pictures/originals/preview-files/%s.%s" % (
+            path = "/pictures/original/preview-files/%s.%s" % (
                 preview_file_id,
                 extension
             )
@@ -838,8 +851,11 @@ def download_file_from_another_instance(
             preview_file_id
         )
     try:
+        file_path = "/tmp/%s.%s" % (preview_file_id, extension)
         gazu.client.download(path, file_path)
-        print("%s downloaded" % file_path)
+        save_func(prefix, preview_file_id, file_path)
+        os.remove(file_path)
+        print("%s (%s) downloaded" % (file_path, prefix))
     except Exception as e:
         print(e)
         print("%s download failed" % file_path)
