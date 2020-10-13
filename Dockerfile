@@ -12,6 +12,7 @@ COPY setup.py setup.cfg ./
 COPY zou/__init__.py ./zou/
 RUN python -c "import distutils.core; setup = distutils.core.run_setup('setup.py'); print('\n'.join(setup.install_requires))" > image-requirements.txt
 RUN pip install -r image-requirements.txt
+RUN pip install greenlet==0.4.16
 
 # install ffmpeg
 RUN apt-get install ffmpeg --yes
