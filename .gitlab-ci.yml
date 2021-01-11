@@ -4,7 +4,7 @@ stages:
 
 tests:python:
   stage: test
-  image: python:3
+  image: python:3.7.6
   except:
     - tags
   services:
