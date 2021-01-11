@@ -409,8 +409,9 @@ def get_or_create_asset_type(name):
         clear_asset_type_cache()
 
         events.emit(
-            "asset-type:new", {"name": name, "id": asset_type.id}
+            "asset-type:new", {"name": asset_type.name, "id": asset_type.id}
         )
+
     return asset_type.serialize(obj_type="AssetType")
 
 
