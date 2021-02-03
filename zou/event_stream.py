@@ -12,7 +12,8 @@ monkey.patch_all()
 def get_redis_url():
     redis_host = config.KEY_VALUE_STORE["host"]
     redis_port = config.KEY_VALUE_STORE["port"]
-    return "redis://%s:%s/2" % (redis_host, redis_port)
+    db_index = config.KV_EVENTS_DB_INDEX
+    return "redis://%s:%s/%s" % (redis_host, redis_port, db_index)
 
 
 def create_app(redis_url):
