@@ -16,6 +16,10 @@ class SerializerMixin(object):
 
     def serialize(self, obj_type=None, relations=False):
         attrs = inspect(self).attrs.keys()
+
+        # temporary set relations to True for all serialization
+        relations = True
+
         if relations:
             obj_dict = {
                 attr: serialize_value(getattr(self, attr)) for attr in attrs
