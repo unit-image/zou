@@ -29,7 +29,9 @@ def create_app(redis_url):
     @socketio.on("connect", namespace="/events")
     def connected():
         try:
-            verify_jwt_in_request()
+            # Temporary remove access token validation until we found out
+            # why it does not work with containers in production
+            # verify_jwt_in_request()
             app.logger.info("New websocket client connected")
         except Exception:
             app.logger.info("New websocket client failed to connect")
