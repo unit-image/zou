@@ -998,8 +998,8 @@ def get_preview_dimensions(project):
     resolution = project["resolution"]
     height = 1080
     width = None
-    if resolution is not None and bool(re.match(r"\d*x\d*", resolution)):
-        [width, height] = resolution.split("x")
+    if resolution is not None and bool(re.match(r"\d*\*\d*", resolution)):
+        [width, height] = resolution.split("*")
         width = int(width)
         height = int(height)
     return (width, height)

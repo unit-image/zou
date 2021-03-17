@@ -34,6 +34,8 @@ class ImportShotgunProjectsResource(BaseImportShotgunResource):
             "project_status_id": project_status_id,
             "name": sg_project["name"],
             "shotgun_id": sg_project["id"],
+            "fps": sg_project["sg_fps"],
+            "resolution": sg_project["sg_width___height"],
             "data": {},
         }
 

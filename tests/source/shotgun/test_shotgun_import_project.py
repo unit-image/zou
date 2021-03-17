@@ -41,7 +41,7 @@ class ImportShotgunProjectTestCase(ShotgunTestCase):
             "name": "Elephant Dream",
             "sg_status": "Active",
             "sg_fps": "25",
-            "sg_width___height": "1920 / 1080",
+            "sg_width___height": "1920*1080",
             "type": "Project"
         }
 
