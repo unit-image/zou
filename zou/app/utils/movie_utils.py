@@ -118,7 +118,10 @@ def add_empty_soundtrack(file_path):
         current_app.logger.error("\n".join(str(err).split("\\n")))
 
     fs.rm_file(file_path)
-    fs.copyfile(tmp_file_path, file_path)
+    if sp.returncode == 0:
+        fs.copyfile(tmp_file_path, file_path)
+
+    fs.rm_file(tmp_file_path)
     return sp.returncode
 
 
