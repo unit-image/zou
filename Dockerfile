@@ -17,3 +17,5 @@ RUN pip install greenlet==0.4.16
 # Install zou
 COPY . .
 RUN pip install -r requirements.txt
+RUN mkdir /tmp/zou
+VOLUME /tmp/zou
