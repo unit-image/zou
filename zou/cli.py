@@ -7,7 +7,8 @@ import click
 from sqlalchemy.exc import IntegrityError
 
 from zou.app.utils import dbhelpers, auth, commands
-from zou.app.services import persons_service, tasks_service
+from zou.app.services import persons_service
+from zou.app.services.exception import PersonNotFoundException
 
 
 @click.group()
@@ -109,29 +110,37 @@ def create_admin(email, password):
     "Create an admin user to allow usage of the API when database is empty."
     "Set password is 'default'."
 
+    # If a user already exists, change its role to admin
     try:
-        # Allow "admin@example.com" to be invalid.
-        if email != "admin@example.com":
-            auth.validate_email(email)
-        password = auth.encrypt_password(password)
-        persons_service.create_person(
-            email, password, "Super", "Admin", role="admin"
-        )
-        print("Admin successfully created.")
+        person = persons_service.get_person_by_email(email)
+        if person['role'] != 'admin':
+            persons_service.update_person(
+                person['id'],
+                {'role': 'admin'})
+    except PersonNotFoundException:
+        try:
+            # Allow "admin@example.com" to be invalid.
+            if email != "admin@example.com":
+                auth.validate_email(email)
+            password = auth.encrypt_password(password)
+            persons_service.create_person(
+                email, password, "Super", "Admin", role="admin"
+            )
+            print("Admin successfully created.")
 
-    except IntegrityError:
-        print("User already exists for this email.")
-        sys.exit(1)
+        except IntegrityError:
+            print("User already exists for this email.")
+            sys.exit(1)
 
-    except auth.PasswordsNoMatchException:
-        print("Passwords don't match.")
-        sys.exit(1)
-    except auth.PasswordTooShortException:
-        print("Password is too short.")
-        sys.exit(1)
-    except auth.EmailNotValidException:
-        print("Email is not valid.")
-        sys.exit(1)
+        except auth.PasswordsNoMatchException:
+            print("Passwords don't match.")
+            sys.exit(1)
+        except auth.PasswordTooShortException:
+            print("Password is too short.")
+            sys.exit(1)
+        except auth.EmailNotValidException:
+            print("Email is not valid.")
+            sys.exit(1)
 
 
 @cli.command("clean_auth_tokens")
