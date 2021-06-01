@@ -34,7 +34,7 @@ from .software import SoftwaresResource, SoftwareResource
 from .task_type import TaskTypesResource, TaskTypeResource
 from .task_status import TaskStatusesResource, TaskStatusResource
 from .task import TasksResource, TaskResource
-from .time_spent import TimeSpentsResource, TimeSpentResource
+from .time_spent import TimeSpentsResource, TimeSpentResource, TimeSpentStatusesResource
 from .working_file import WorkingFilesResource, WorkingFileResource
 
 
@@ -77,6 +77,7 @@ routes = [
     ("/data/comments/<instance_id>", CommentResource),
     ("/data/time-spents/", TimeSpentsResource),
     ("/data/time-spents/<instance_id>", TimeSpentResource),
+    ("/data/time-spent-statuses", TimeSpentStatusesResource),
     ("/data/custom-actions/", CustomActionsResource),
     ("/data/custom-actions/<instance_id>", CustomActionResource),
     ("/data/asset-instances/", AssetInstancesResource),

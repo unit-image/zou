@@ -25,7 +25,7 @@ from zou.app.models.project import Project
 from zou.app.models.task import Task
 from zou.app.models.task_type import TaskType
 from zou.app.models.task_status import TaskStatus
-from zou.app.models.time_spent import TimeSpent
+from zou.app.models.time_spent import TimeSpent, TimeSpentStatus
 
 from zou.app.utils import cache, fields, query as query_utils
 
@@ -1030,8 +1030,18 @@ def create_or_update_time_spent(task_id, person_id, date, duration, add=False):
             project_id=project_id
         )
     else:
+        # Default value in migration does not work. See migration file
+        # 18e010daad1d_add_timespent_description_and_validated.py
+        validation_default_value = app.config["DEFAULT_TIMESPENT_VALIDATION_STATUS"]
+        validation_status = TimeSpentStatus.query.filter(
+            TimeSpentStatus.name.like(validation_default_value)).first()
+
         time_spent = TimeSpent.create(
-            task_id=task_id, person_id=person_id, date=date, duration=duration
+            task_id=task_id,
+            person_id=person_id,
+            date=date,
+            duration=duration,
+            validation_status_id=validation_status.id
         )
         events.emit(
             "time-spent:new",

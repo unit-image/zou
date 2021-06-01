@@ -110,3 +110,6 @@ TO_REVIEW_TASK_STATUS = "To review"
 DEFAULT_FILE_STATUS = "To review"
 DEFAULT_FILE_TREE = os.getenv("DEFAULT_FILE_TREE", "default")
 FILE_TREE_FOLDER = os.getenv("FILE_TREE_FOLDER")
+
+# Unit Image Specifics
+DEFAULT_TIMESPENT_VALIDATION_STATUS = 'Pending'
