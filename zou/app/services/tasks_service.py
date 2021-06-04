@@ -1003,7 +1003,14 @@ def get_or_create_task_type(
     return task_type.serialize()
 
 
-def create_or_update_time_spent(task_id, person_id, date, duration, add=False):
+def create_or_update_time_spent(
+        task_id,
+        person_id,
+        date,
+        duration,
+        add=False,
+        description=None,
+        validation_status_id=None):
     """
     Create a new time spent if it doesn't exist. If it exists, it update it
     with the new duratin and returns it from the database.
@@ -1024,24 +1031,31 @@ def create_or_update_time_spent(task_id, person_id, date, duration, add=False):
             time_spent.update({"duration": time_spent.duration + duration})
         else:
             time_spent.update({"duration": duration})
+        time_spent.update(
+            {
+                "description": description,
+                "validation_status_id": validation_status_id
+            })
         events.emit(
             "time-spent:update",
             {"time_spent_id": str(time_spent.id)},
             project_id=project_id
         )
     else:
-        # Default value in migration does not work. See migration file
-        # 18e010daad1d_add_timespent_description_and_validated.py
-        validation_default_value = app.config["DEFAULT_TIMESPENT_VALIDATION_STATUS"]
-        validation_status = TimeSpentStatus.query.filter(
-            TimeSpentStatus.name.like(validation_default_value)).first()
+        if not validation_status_id:
+            # Default value in migration does not work. See migration file
+            # 18e010daad1d_add_timespent_description_and_validated.py
+            validation_default_value = app.config["DEFAULT_TIMESPENT_VALIDATION_STATUS"]
+            validation_status_id = TimeSpentStatus.query.filter(
+                TimeSpentStatus.name.like(validation_default_value)).first().id
 
         time_spent = TimeSpent.create(
             task_id=task_id,
             person_id=person_id,
             date=date,
             duration=duration,
-            validation_status_id=validation_status.id
+            description=description,
+            validation_status_id=validation_status_id,
         )
         events.emit(
             "time-spent:new",

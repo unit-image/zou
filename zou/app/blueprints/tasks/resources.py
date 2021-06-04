@@ -483,6 +483,8 @@ class SetTimeSpentResource(Resource):
                 person_id,
                 datetime.datetime.strptime(date, "%Y-%m-%d"),
                 args["duration"],
+                description=args.get("description"),
+                validation_status_id=args.get("validation_status_id"),
             )
             return time_spent, 201
         except ValueError:
@@ -493,6 +495,8 @@ class SetTimeSpentResource(Resource):
     def get_arguments(self):
         parser = reqparse.RequestParser()
         parser.add_argument("duration", default=0)
+        parser.add_argument("description")
+        parser.add_argument("validation_status_id")
         args = parser.parse_args()
         return args
 
@@ -513,7 +517,13 @@ class AddTimeSpentResource(Resource):
 
             persons_service.get_person(person_id)
             time_spent = tasks_service.create_or_update_time_spent(
-                task_id, person_id, date, args["duration"], add=True
+                task_id,
+                person_id,
+                date,
+                args["duration"],
+                add=True,
+                description=args.get("description"),
+                validation_status_id=args.get("validation_status_id"),
             )
             return time_spent, 201
         except ValueError:
@@ -524,6 +534,8 @@ class AddTimeSpentResource(Resource):
     def get_arguments(self):
         parser = reqparse.RequestParser()
         parser.add_argument("duration", default=0, type=int)
+        parser.add_argument("description")
+        parser.add_argument("validation_status_id")
         args = parser.parse_args()
         return args
 
