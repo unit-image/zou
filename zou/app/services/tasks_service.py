@@ -1031,11 +1031,13 @@ def create_or_update_time_spent(
             time_spent.update({"duration": time_spent.duration + duration})
         else:
             time_spent.update({"duration": duration})
-        time_spent.update(
-            {
-                "description": description,
-                "validation_status_id": validation_status_id
-            })
+
+        if description:
+            time_spent.update({"description": description, })
+
+        if validation_status_id:
+            time_spent.update({"validation_status_id": validation_status_id})
+
         events.emit(
             "time-spent:update",
             {"time_spent_id": str(time_spent.id)},

@@ -16,6 +16,7 @@ class PersonTimeSpentsTestCase(ApiDBTestCase):
         self.generate_fixture_task_type()
         self.generate_fixture_task_status()
         self.generate_fixture_assigner()
+        self.gerenate_fixture_time_spent_statuses()
 
         self.generate_fixture_task()
         task_id = str(self.task.id)

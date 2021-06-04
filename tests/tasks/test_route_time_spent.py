@@ -1,6 +1,8 @@
 from tests.base import ApiDBTestCase
 
 from zou.app.services import tasks_service
+from zou.app.models.time_spent import TimeSpent, TimeSpentStatus
+
 
 
 class RouteTimeSpentTestCase(ApiDBTestCase):
@@ -21,6 +23,7 @@ class RouteTimeSpentTestCase(ApiDBTestCase):
         self.generate_fixture_person()
         self.generate_fixture_assigner()
         self.generate_fixture_task()
+        self.gerenate_fixture_time_spent_statuses()
 
     def create_time_spents(self):
         self.person_id = str(self.person.id)
@@ -52,8 +55,14 @@ class RouteTimeSpentTestCase(ApiDBTestCase):
         )
 
     def test_set_time_spent(self):
+        time_status = TimeSpentStatus.create(
+            name="status",
+            short_name="test")
+        description = 'description'
         data = {
-            "duration": 3600
+            "duration": 3600,
+            "description": description,
+            "validation_status_id": str(time_status.id)
         }
         self.post(
             "/actions/tasks/%s/time-spents/2017-09-23/persons/%s" % (
@@ -66,6 +75,8 @@ class RouteTimeSpentTestCase(ApiDBTestCase):
         self.assertEqual(time_spents[0]["date"], "2017-09-23")
         self.assertEqual(len(time_spents), 1)
         self.assertEqual(time_spents[0]["duration"], data["duration"])
+        self.assertEqual(time_spents[0]["description"], data["description"])
+        self.assertEqual(time_spents[0]["validation_status_id"], data["validation_status_id"])
 
     def test_set_time_spent_wrong_date(self):
         data = {

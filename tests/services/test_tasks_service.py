@@ -50,6 +50,7 @@ class TaskServiceTestCase(ApiDBTestCase):
         self.generate_fixture_working_file()
         self.generate_fixture_output_type()
         self.generate_fixture_output_file()
+        self.gerenate_fixture_time_spent_statuses()
 
         self.project_id = str(self.project.id)
         self.task_id = str(self.task.id)
@@ -445,7 +446,8 @@ class TaskServiceTestCase(ApiDBTestCase):
             person_id=self.person.id,
             task_id=self.task.id,
             date=datetime.date(2017, 9, 23),
-            duration=3600
+            duration=3600,
+            validation_status_id=self.time_spent_status.id,
         )
         deletion_service.remove_task(self.task_id, force=True)
         self.assertRaises(

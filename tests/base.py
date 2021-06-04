@@ -38,6 +38,7 @@ from zou.app.models.task_status import TaskStatus
 from zou.app.models.task_type import TaskType
 from zou.app.models.software import Software
 from zou.app.models.working_file import WorkingFile
+from zou.app.models.time_spent import TimeSpent, TimeSpentStatus
 
 TEST_FOLDER = os.path.join("tests", "tmp")
 
@@ -1033,3 +1034,9 @@ class ApiDBTestCase(ApiTestCase):
 
     def delete_test_folder(self):
         fs.rm_rf(TEST_FOLDER)
+
+    def gerenate_fixture_time_spent_statuses(self):
+        self.time_spent_status = TimeSpentStatus.create(
+            name=app.config['DEFAULT_TIMESPENT_VALIDATION_STATUS'],
+            short_name="shtn"
+        )

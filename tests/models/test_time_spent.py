@@ -1,6 +1,6 @@
 from tests.base import ApiDBTestCase
 
-from zou.app.models.time_spent import TimeSpent
+from zou.app.models.time_spent import TimeSpent, TimeSpentStatus
 
 from zou.app.utils import fields
 
@@ -20,11 +20,13 @@ class TimeSpentTestCase(ApiDBTestCase):
         self.generate_fixture_task_status()
         self.generate_fixture_assigner()
         self.generate_fixture_task()
-        self.tasks = self.generate_data(
+        self.gerenate_fixture_time_spent_statuses()
+        self.time_spents = self.generate_data(
             TimeSpent,
             3,
             task_id=self.task.id,
-            person_id=self.person.id
+            person_id=self.person.id,
+            validation_status_id=self.time_spent_status.id
         )
 
     def test_get_time_spents(self):
@@ -39,14 +41,25 @@ class TimeSpentTestCase(ApiDBTestCase):
         self.get_404("data/time-spents/%s" % fields.gen_uuid())
 
     def test_create_time_spent(self):
+        description = "description"
         data = {
             "person_id": self.person.id,
             "task_id": self.task.id,
             "date": "2017-09-23",
-            "duration": 3600
+            "duration": 3600,
+            "validation_status_id": self.time_spent_status.id,
+            "description": description,
         }
         self.time_spent = self.post("data/time-spents", data)
         self.assertIsNotNone(self.time_spent["id"])
+        self.assertEqual(
+            self.time_spent['validation_status_id'],
+            str(data['validation_status_id'])
+        )
+        self.assertEqual(
+            self.time_spent['description'],
+            description
+        )
 
         time_spents = self.get("data/time-spents")
         self.assertEqual(len(time_spents), 4)

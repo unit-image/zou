@@ -31,6 +31,7 @@ class TimeSpentsServiceTestCase(ApiDBTestCase):
         self.generate_fixture_shot_task()
         shot_task_id = str(self.shot_task.id)
 
+        self.gerenate_fixture_time_spent_statuses()
         tasks_service.create_or_update_time_spent(
             task_id, self.person_id, "2018-06-04", 500
         )
