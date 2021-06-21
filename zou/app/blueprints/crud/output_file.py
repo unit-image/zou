@@ -35,6 +35,7 @@ class OutputFileResource(BaseModelResource):
         entity = entities_service.get_entity(instance["entity_id"])
         user_service.check_project_access(entity["project_id"])
         user_service.check_entity_access(entity["id"])
+
         return True
 
     def check_update_permissions(self, output_file, data):
@@ -42,5 +43,5 @@ class OutputFileResource(BaseModelResource):
             return True
         else:
             return user_service.check_working_on_entity(
-                output_file["entity_id"]
+                output_file["temporal_entity_id"] or output_file["entity_id"]
             )
