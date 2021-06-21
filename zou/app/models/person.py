@@ -2,6 +2,7 @@ import sys
 
 from sqlalchemy_utils import UUIDType, EmailType, LocaleType, TimezoneType
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.inspection import inspect
 
 from pytz import timezone as pytz_timezone
 from babel import Locale
@@ -9,6 +10,7 @@ from babel import Locale
 from zou.app import db
 from zou.app.models.serializer import SerializerMixin
 from zou.app.models.base import BaseMixin
+from zou.app.utils.fields import serialize_value
 
 
 department_link = db.Table(
@@ -60,23 +62,40 @@ class Person(db.Model, BaseMixin, SerializerMixin):
         return "%s %s" % (self.first_name, self.last_name)
 
     def serialize(self, obj_type="Person", relations=False):
-        data = SerializerMixin.serialize(self, "Person", relations=relations)
+        """
+        Overriding SerializeMixin's serialize method to filter out `created_by`
+        and `updated_by` attributes, to avoid infinite recursion.
+        """
+        attrs = [
+            attr for attr in inspect(self).attrs.keys()
+            if attr not in ["created_by", "updated_by"]]
+
+        if relations:
+            data = {
+                attr: serialize_value(getattr(self, attr)) for attr in attrs
+            }
+        else:
+            data = {
+                attr: serialize_value(getattr(self, attr))
+                for attr in attrs
+                if not self.is_join(attr)
+            }
+        data["type"] = obj_type or type(self).__name__
         data["full_name"] = self.full_name()
         return data
 
     def serialize_safe(self, relations=False):
-        data = SerializerMixin.serialize(self, "Person", relations=relations)
-        data["full_name"] = self.full_name()
+        data = self.serialize("Person", relations=relations)
         del data["password"]
         return data
 
     def present_minimal(self, relations=False):
-        data = SerializerMixin.serialize(self, "Person", relations=relations)
+        data = self.serialize("Person", relations=relations)
         return {
             "id": data["id"],
             "first_name": data["first_name"],
             "last_name": data["last_name"],
-            "full_name": self.full_name(),
+            "full_name": data["full_name"],
             "has_avatar": data["has_avatar"],
             "active": data["active"]
         }

@@ -474,7 +474,8 @@ def _prepare_query(task_id, is_client, is_manager):
         Comment.query
         .order_by(Comment.created_at.desc())
         .filter_by(object_id=task_id)
-        .join(Person, TaskStatus)
+        .join(Person, (Person.id == Comment.person_id))
+        .join(TaskStatus, (TaskStatus.id == Comment.task_status_id))
         .add_columns(
             TaskStatus.name,
             TaskStatus.short_name,
@@ -780,7 +781,7 @@ def get_person_tasks(person_id, projects, is_done=None):
     task_comment_map = {}
     comments = (
         Comment.query.filter(Comment.object_id.in_(task_ids))
-        .join(Person)
+        .join(Person, (Person.id == Comment.person_id))
         .filter(Person.role != "client")
         .order_by(Comment.object_id, Comment.created_at)
         .all()

@@ -1,8 +1,20 @@
 import datetime
 
+from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import relationship
 from sqlalchemy_utils import UUIDType
 from zou.app import db
 from zou.app.utils import fields
+
+
+def get_current_user_id():
+    from zou.app.services import persons_service
+    from zou.app.services.exception import PersonNotFoundException
+    try:
+        return persons_service.get_current_user()["id"]
+    # Can happen when there are no users in the database yet.
+    except (PersonNotFoundException, RuntimeError):
+        return None
 
 
 class BaseMixin(object):
@@ -18,6 +30,43 @@ class BaseMixin(object):
         default=datetime.datetime.utcnow,
         onupdate=datetime.datetime.utcnow,
     )
+
+    @declared_attr
+    def created_by_id(cls):
+        return db.Column(
+            UUIDType(binary=False),
+            db.ForeignKey("person.id"),
+            default=get_current_user_id,
+            nullable=True)
+
+    @declared_attr
+    def created_by(cls):
+        return relationship(
+            'Person',
+            foreign_keys="{}.created_by_id".format(cls.__name__),
+            primaryjoin='Person.id == %s.created_by_id' % cls.__name__,
+            remote_side='Person.id',
+            lazy="subquery"
+        )
+
+    @declared_attr
+    def updated_by_id(cls):
+        return db.Column(
+            UUIDType(binary=False),
+            db.ForeignKey("person.id"),
+            default=get_current_user_id,
+            onupdate=get_current_user_id,
+            nullable=True)
+
+    @declared_attr
+    def updated_by(cls):
+        return relationship(
+            'Person',
+            foreign_keys="{}.updated_by_id".format(cls.__name__),
+            primaryjoin='Person.id == %s.updated_by_id' % cls.__name__,
+            remote_side='Person.id',
+            lazy="subquery"
+        )
 
     def __repr__(self):
         """
