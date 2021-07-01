@@ -35,4 +35,4 @@ class SerializerMixin(object):
         return [
             model.serialize(obj_type=obj_type, relations=relations)
             for model in models
-        ]
+    ]
