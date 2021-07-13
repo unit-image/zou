@@ -1,5 +1,8 @@
 from flask import abort, request
 from flask_jwt_extended import jwt_required
+from flask_restful import current_app
+
+from sqlalchemy.exc import StatementError
 
 from zou.app.models.person import Person
 from zou.app.services import persons_service, deletion_service
@@ -22,11 +25,11 @@ class PersonsResource(BaseModelsResource):
 
         if permissions.has_manager_permissions():
             if request.args.get("with_pass_hash") == "true":
-                return [person.serialize() for person in query.all()]
+                return [person.serialize(relations=relations) for person in query.all()]
             else:
-                return [person.serialize_safe() for person in query.all()]
+                return [person.serialize_safe(relations=relations) for person in query.all()]
         else:
-            return [person.present_minimal() for person in query.all()]
+            return [person.present_minimal(relations=relations) for person in query.all()]
 
     def post(self):
         abort(405)
@@ -62,11 +65,33 @@ class PersonResource(BaseModelResource, ArgsMixin):
         else:
             raise permissions.PermissionDenied
 
-    def serialize_instance(self, instance):
+    @jwt_required
+    def get(self, instance_id):
+        """
+        Retrieve given person.
+        """
+        relations = request.args.get("relations", False)
+
+        try:
+            instance = self.get_model_or_404(instance_id)
+            result = self.serialize_instance(instance, relations=relations)
+            self.check_read_permissions(result)
+            result = self.clean_get_result(result)
+
+        except StatementError as exception:
+            current_app.logger.error(str(exception), exc_info=1)
+            return {"message": str(exception)}, 400
+
+        except ValueError:
+            abort(404)
+
+        return result, 200
+
+    def serialize_instance(self, instance, relations=False):
         if permissions.has_manager_permissions():
-            return instance.serialize_safe()
+            return instance.serialize_safe(relations=relations)
         else:
-            return instance.present_minimal()
+            return instance.present_minimal(relations=relations)
 
     def pre_update(self, instance_dict, data):
         if data.get("active", False) \
