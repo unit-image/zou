@@ -1012,7 +1012,7 @@ def create_or_update_time_spent(
         description=None,
         validation_status_id=None):
     """
-    Create a new time spent if it doesn't exist. If it exists, it update it
+    Create a new time spent if it doesn't exist. If it exists, it updates it
     with the new duratin and returns it from the database.
     """
     try:

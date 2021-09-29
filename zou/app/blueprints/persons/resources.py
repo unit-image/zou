@@ -4,7 +4,12 @@ from flask import abort
 from flask_restful import Resource, reqparse
 from flask_jwt_extended import jwt_required
 
-from zou.app.services import persons_service, user_service, time_spents_service
+from zou.app.services import (
+    persons_service,
+    user_service,
+    time_spents_service,
+    day_worked_service
+)
 from zou.app.utils import auth, permissions, csv_utils, fields
 from zou.app.services.exception import WrongDateFormatException
 
@@ -106,7 +111,8 @@ class PresenceLogsResource(Resource):
     def get(self, month_date):
         permissions.check_admin_permissions()
         date = datetime.datetime.strptime(month_date, "%Y-%m")
-        presence_logs = persons_service.get_presence_logs(date.year, date.month)
+        presence_logs = persons_service.get_presence_logs(
+            date.year, date.month)
         return csv_utils.build_csv_response(presence_logs)
 
 
@@ -197,6 +203,70 @@ class PersonDayTimeSpentsResource(Resource):
         try:
             return time_spents_service.get_day_time_spents(
                 person_id, year, month, day
+            )
+        except WrongDateFormatException:
+            abort(404)
+
+
+class PersonDayWorkedResource(Resource):
+    """
+    Manage day_worked (get, create and update) for a person at a given date.
+    """
+    @jwt_required
+    def get(self, person_id, year, month, day):
+        user_service.check_person_access(person_id)
+        try:
+            return day_worked_service.get_day_worked(
+                person_id, year, month, day
+            )
+        except WrongDateFormatException:
+            abort(404)
+
+    @jwt_required
+    def post(self, person_id, year, month, day):
+        date = datetime.date(int(year), int(month), int(day))
+        return self.create_or_update(person_id, date)
+
+    @jwt_required
+    def put(self, person_id, year, month, day):
+        date = datetime.date(int(year), int(month), int(day))
+        return self.create_or_update(person_id, date)
+
+    def create_or_update(self, person_id, date):
+        args = self.get_arguments()
+        try:
+            day_worked = day_worked_service.create_or_update_day_worked(
+                person_id,
+                date,
+                work_duration=args.get("work_duration"),
+                variable_time=args.get("variable_time"),
+                justification=args.get("justification")
+            )
+            return day_worked, 201
+        except ValueError:
+            abort(404)
+        except WrongDateFormatException:
+            abort(404)
+
+    def get_arguments(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("work_duration", default=1)
+        parser.add_argument("variable_time", default=0)
+        parser.add_argument("person_id")
+        args = parser.parse_args()
+        return args
+
+
+class PersonDayWorkedMonthResource(Resource):
+    """
+    Get days worked for a person at a given month.
+    """
+    @jwt_required
+    def get(self, person_id, year, month):
+        user_service.check_person_access(person_id)
+        try:
+            return day_worked_service.get_month_days_worked(
+                person_id, year, month
             )
         except WrongDateFormatException:
             abort(404)
