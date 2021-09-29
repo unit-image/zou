@@ -5,7 +5,7 @@ from flask_restful import Resource, reqparse
 from flask_jwt_extended import jwt_required
 
 from zou.app.services import persons_service, user_service, time_spents_service
-from zou.app.utils import auth, permissions, csv_utils
+from zou.app.utils import auth, permissions, csv_utils, fields
 from zou.app.services.exception import WrongDateFormatException
 
 from zou.app import config
@@ -150,6 +150,22 @@ class PersonMonthTimeSpentsResource(Resource):
             return time_spents_service.get_month_time_spents(
                 person_id, year, month
             )
+        except WrongDateFormatException:
+            abort(404)
+
+
+class PersonMonthAllTimeSpentsResource(Resource):
+    """
+    Get all time spents for a given person and month.
+    """
+
+    @jwt_required
+    def get(self, person_id, year, month):
+        user_service.check_person_access(person_id)
+        try:
+            timespents = time_spents_service.get_time_spents_for_month(
+                year, month, person_id=person_id)
+            return fields.serialize_list(timespents)
         except WrongDateFormatException:
             abort(404)
 
