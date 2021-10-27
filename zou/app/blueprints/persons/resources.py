@@ -253,6 +253,7 @@ class PersonDayWorkedResource(Resource):
         parser.add_argument("work_duration", default=1)
         parser.add_argument("variable_time", default=0)
         parser.add_argument("person_id")
+        parser.add_argument("justification")
         args = parser.parse_args()
         return args
 
