@@ -6,6 +6,7 @@ from zou.app.models.day_worked import DayWorked
 from zou.app.utils import events
 from zou.app.services.exception import WrongDateFormatException
 
+
 def create_or_update_day_worked(
         person_id,
         date,
@@ -25,16 +26,11 @@ def create_or_update_day_worked(
         raise WrongDateFormatException
 
     if day_worked is not None:
-        if work_duration == 0:
-            day_worked.delete()
-        else:
+        if work_duration:
             day_worked.update({"work_duration": work_duration})
 
         if variable_time:
             day_worked.update({"variable_time": variable_time})
-
-        if work_duration:
-            day_worked.update({"work_duration": work_duration})
 
         if justification:
             day_worked.update({"justification": justification})
