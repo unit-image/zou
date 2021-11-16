@@ -101,7 +101,15 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
         for key in self.parent_map.keys():
             try:
                 asset = assets_service.get_asset_by_shotgun_id(key)
-                data = {"entities_out": self.parent_map[key]}
+
+                asset = assets_service.get_full_asset(asset['id'])
+                former_children = [
+                    Entity.get(child_id)
+                    for child_id in asset.get('entities_out', [])
+                ]
+                children = list(set(self.parent_map[key] + former_children))
+                data = {"entities_out": children}
+
                 assets_service.update_asset(asset["id"], data)
                 assets_service.clear_asset_cache(asset["id"])
             except AssetNotFoundException:
