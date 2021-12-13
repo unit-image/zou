@@ -1316,7 +1316,19 @@ def get_full_task(task_id):
         pass
 
     if entity["parent_id"] is not None:
-        sequence = shots_service.get_sequence(entity["parent_id"])
+        entity_type_name = entity_type["name"].lower()
+        sequence_id = None
+
+        if entity_type_name == "asset":
+            # Assets are not linked to specific sequences or episodes.
+            return task
+        elif entity_type_name == "sequence":
+            sequence_id = entity["id"]
+        else:
+            sequence_id = entity["parent_id"]
+
+        sequence = shots_service.get_sequence(sequence_id)
+
         task["sequence"] = sequence
         if sequence["parent_id"] is not None:
             episode = shots_service.get_episode(sequence["parent_id"])
