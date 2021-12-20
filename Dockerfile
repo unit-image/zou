@@ -19,3 +19,5 @@ COPY . .
 RUN pip install -r requirements.txt
 RUN mkdir /tmp/zou
 VOLUME /tmp/zou
+
+ENTRYPOINT ["bash", "./entrypoint.sh"]
