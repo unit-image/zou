@@ -33,7 +33,10 @@ def get_last_events(
     if project_id is not None:
         query = query.filter(ApiEvent.project_id == project_id)
 
-    events = query.limit(page_size).all()
+    if page_size:
+        query = query.limit(page_size)
+
+    events = query.all()
     return [
         fields.serialize_dict({
             "id": event.id,

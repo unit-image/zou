@@ -15,13 +15,13 @@ class EventsResource(Resource, ArgsMixin):
             ("after", None, False),
             ("before", None, False),
             ("only_files", False, False),
-            ("page_size", 100, False),
+            ("page_size", None, False),
             ("project_id", None, False),
         ])
         permissions.check_manager_permissions()
         before = self.parse_date_parameter(args["before"])
         after = self.parse_date_parameter(args["after"])
-        page_size = args["page_size"]
+        page_size = int(args["page_size"]) if args["page_size"] else None
         only_files = args["only_files"] == "true"
         project_id = args.get("project_id", None)
         if project_id is not None and not fields.is_valid_id(project_id):

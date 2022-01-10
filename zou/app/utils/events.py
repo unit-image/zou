@@ -67,21 +67,25 @@ def emit(event, data={}, persist=True, project_id=None):
     event_handlers = handlers.get(event, {})
     if project_id is not None:
         data["project_id"] = project_id
-    data = fields.serialize_dict(data)
-    publisher_store.publish(event, data)
+
+    serialized_data = fields.serialize_dict(data)
+
     if persist:
-        save_event(event, data, project_id=project_id)
+        zou_event = save_event(
+            event, serialized_data, project_id=project_id)
+        serialized_data['event_id'] = str(zou_event.id)
+
+    publisher_store.publish(event, serialized_data)
 
     from zou.app.config import ENABLE_JOB_QUEUE
-
     for func in event_handlers.values():
         if ENABLE_JOB_QUEUE:
             from zou.app.stores.queue_store import job_queue
 
-            job_queue.enqueue(func.handle_event, data)
+            job_queue.enqueue(func.handle_event, serialized_data)
         else:
             try:
-                func.handle_event(data)
+                func.handle_event(serialized_data)
             except Exception:
                 current_app.logger.error("Error handling event", exc_info=1)
 
