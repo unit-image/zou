@@ -1032,11 +1032,15 @@ def get_shot_versions(shot_id):
 
 
 def get_base_entity_type_name(entity_dict):
-    type_name = "Asset"
     if is_shot(entity_dict):
         type_name = "Shot"
+    elif is_scene(entity_dict):
+        type_name = "Scene"
     elif is_sequence(entity_dict):
         type_name = "Sequence"
     elif is_episode(entity_dict):
         type_name = "Episode"
+    else:
+        type_name = "Asset"
+
     return type_name
