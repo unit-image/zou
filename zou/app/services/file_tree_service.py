@@ -8,6 +8,7 @@ from zou.app import app
 
 from zou.app.models.entity import Entity
 from zou.app.models.entity_type import EntityType
+from zou.app.models.output_type import OutputType
 from zou.app.models.task_type import TaskType
 from zou.app.models.task import Task
 from zou.app.models.department import Department
@@ -682,6 +683,7 @@ class PathTokens(object):
     DEPARTMENT = "Department"
     TASK_TYPE = "TaskType"
     TASK = "Task"
+    OUTPUT_TYPE = "OutputType"
 
 
 def get_shot_task_from_path(file_path, project, mode="working", sep="/"):
@@ -741,16 +743,26 @@ def get_asset_task_from_path(file_path, project, mode="working", sep="/"):
 
 def extract_variable_values_from_path(elements, template_elements):
     data_names = {}
-
+    max_count = min(len(elements), len(template_elements))
     for i, template_element in enumerate(template_elements):
+        if i == max_count:
+            break
+
         token = re.search("<(\w*)>", template_element)
 
-        if token is not None:
-            data_type = token.group()
-            data_type = data_type[1 : len(data_type) - 1]
-            value = elements[i].replace("_", " ")
-            value = value.capitalize()
-            data_names[data_type] = value
+        if token is None:
+            if template_element == elements[i]:
+                continue
+            else:
+                raise WrongPathFormatException(
+                    "{} doesn't match {}".format(elements, template_elements)
+                )
+
+        data_type = token.group()
+        data_type = data_type[1: len(data_type) - 1]
+        value = elements[i].replace("_", " ")
+        value = value.capitalize()
+        data_names[data_type] = value
 
     return data_names
 
@@ -780,6 +792,69 @@ def get_path_folders(project, file_path, mode="working", sep="/"):
     root = get_root_path(tree, mode, sep)
     file_path = file_path[len(root) :]
     return file_path.split(sep)
+
+
+def get_data_from_token(project, name, value):
+    """
+    Get data from database using token name and value,
+    where token name corresponds to data type.
+
+    :param project: Project
+    :type project: dict
+    :param name: Token name corresponding to data type
+    :type name: str
+    :param value: Token value
+    :type value: str
+    :return: First data found in database matching given value
+    :rtype: db.Model
+    """
+    data = None
+
+    if name == PathTokens.ASSET:
+        data = Entity.get_by_case_insensitive(
+            name=value,
+            project_id=project["id"],
+        )
+
+    elif name == PathTokens.ASSET_TYPE:
+        data = EntityType.get_by_case_insensitive(name=value)
+
+    elif name == PathTokens.DEPARTMENT:
+        data = Department.get_by_case_insensitive(name=value)
+
+    elif name == PathTokens.EPISODE:
+        data = Entity.get_by_case_insensitive(
+            name=value,
+            entity_type_id=shots_service.get_episode_type()["id"],
+            project_id=project["id"],
+        )
+
+    elif name == PathTokens.SEQUENCE:
+        data = Entity.get_by_case_insensitive(
+            name=value,
+            entity_type_id=shots_service.get_sequence_type()["id"],
+            project_id=project["id"],
+        )
+
+    elif name == PathTokens.OUTPUT_TYPE:
+        data = OutputType.get_by_case_insensitive(name=value)
+
+    elif name == PathTokens.SHOT:
+        data = Entity.get_by_case_insensitive(
+            name=value,
+            entity_type_id=shots_service.get_shot_type()["id"],
+            project_id=project["id"],
+        )
+
+    elif name == PathTokens.TASK:
+        data = Task.get_by_case_insensitive(
+            name=value,
+            project_id=project["id"])
+
+    elif name == PathTokens.TASK_TYPE:
+        data = TaskType.get_by_case_insensitive(name=value)
+
+    return data
 
 
 def guess_shot(project, episode_name, sequence_name, shot_name):
@@ -862,3 +937,77 @@ def guess_task(entity, task_type, task_name):
         raise TaskNotFoundException
     else:
         return task
+
+
+def guess_from_path(project_id, file_path, sep="/"):
+    """
+    Get list of possible project file tree templates matching a file path
+    and data ids corresponding to template tokens.
+
+    :param project_id: Project id of given file
+    :type project_id: str
+    :param file_path: Path to a file
+    :type file_path: str
+    :param sep: File path separator, defaults to "/"
+    :type sep: str
+    :return: List of dictionaries with template tokens and corresponding ids:
+            | .. code-block:: text
+            |   [
+            |       {
+            |           'Asset': 'asset_id',
+            |           'Project': 'project_id',
+            |           'Template': 'asset'
+            |       },
+            |       {
+            |           'Project': 'project_id',
+            |           'Template': 'instance'
+            |       },
+            |       ...
+            |   ]
+    :rtype: list(dict)
+    """
+    matching_templates = []
+    project = projects_service.get_project(project_id)
+    tree = get_tree_from_project(project)
+
+    for mode in tree.keys():
+        # Apply mode style to file path
+        style = tree[mode]["folder_path"].get("style", "")
+        root = root_path = get_root_path(tree, mode, sep)
+        styled_path = apply_style(file_path, style)
+
+        if not styled_path.startswith(root):
+            continue
+
+        styled_path = styled_path[len(root):]
+
+        # Try to get template data from path
+        for template, template_path in tree[mode]["folder_path"].items():
+            template_elements = template_path.split(sep)
+            elements = styled_path.split(sep)
+
+            # Case when template doesn't match given file path content
+            try:
+                tokens = extract_variable_values_from_path(
+                    elements, template_elements)
+            except WrongPathFormatException:
+                continue
+
+            if not tokens:
+                continue
+
+            template_data = {
+                "Project": project["id"],
+                "Template": template,
+            }
+
+            for token, token_value in tokens.items():
+                # Try to get data from database using token and its value
+                data = get_data_from_token(project, token, token_value)
+                if data:
+                    template_data[token] = data.serialize()["id"]
+
+            if template_data not in matching_templates:
+                matching_templates.append(template_data)
+
+    return matching_templates

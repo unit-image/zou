@@ -1,6 +1,7 @@
 import datetime
 
 from sqlalchemy_utils import UUIDType
+from sqlalchemy import func
 from zou.app import db
 from zou.app.utils import fields
 
@@ -46,6 +47,23 @@ class BaseMixin(object):
         element of the returned data.
         """
         return cls.query.filter_by(**kw).first()
+
+    @classmethod
+    def get_by_case_insensitive(cls, **kw):
+        """
+        Shorthand to retrieve data by using filters. It returns the first
+        element of the returned data without checking case for any String type value.
+        """
+        filters = []
+        for key, value in kw.items():
+            column = getattr(cls, key)
+            if isinstance(column.type, db.String):
+                filters.append(
+                    func.lower(column) == func.lower(value))
+            else:
+                filters.append(column == value)
+
+        return cls.query.filter(*filters).first()
 
     @classmethod
     def get_all(cls):
