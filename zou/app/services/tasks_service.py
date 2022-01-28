@@ -22,7 +22,7 @@ from zou.app.models.news import News
 from zou.app.models.person import Person
 from zou.app.models.preview_file import PreviewFile
 from zou.app.models.project import Project
-from zou.app.models.task import Task
+from zou.app.models.task import Task, VisibilityType
 from zou.app.models.task_type import TaskType
 from zou.app.models.task_status import TaskStatus
 from zou.app.models.time_spent import TimeSpent, TimeSpentStatus
@@ -1282,6 +1282,31 @@ def get_tasks_for_project(project_id, page=0):
         Task.updated_at.desc()
     )
     return query_utils.get_paginated_results(query, page, relations=True)
+
+
+def get_visibility_type(visibility_type_id):
+    """
+    Get visibility type data from a given id.
+
+    :return: Serialized visibility type data
+    :rtype: dict
+    """
+    visibility_type = VisibilityType.get(visibility_type_id)
+    return visibility_type.serialize()
+
+
+def get_or_create_visibility_type(name):
+    """
+    Create a new visibility type if it doesn't exist.
+    If it exists, it returns the type from database.
+    """
+    visibility_type = VisibilityType.get_by(name=name)
+    if visibility_type is None:
+        visibility_type = VisibilityType.create(name=name)
+        events.emit(
+            "visibility-type:new",
+            {"visibility_id": visibility_type.id})
+    return visibility_type.serialize()
 
 
 @cache.memoize_function(120)

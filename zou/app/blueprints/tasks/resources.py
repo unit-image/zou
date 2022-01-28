@@ -659,3 +659,35 @@ class ProjectPreviewFilesResource(Resource, ArgsMixin):
         projects_service.get_project(project_id)
         page = self.get_page()
         return files_service.get_preview_files_for_project(project_id, page)
+
+
+class VisibilityType(Resource, ArgsMixin):
+    """
+    Retrieves a Visibility Type by its id.
+    """
+    @jwt_required
+    def get(self, visibility_type_id):
+        return tasks_service.get_visibility_type(visibility_type_id)
+
+
+class AddVisibilityType(Resource, ArgsMixin):
+    """
+    Creates a Visibility Type using given name.
+    """
+    @jwt_required
+    def post(self):
+        args = self.get_arguments()
+
+        try:
+            visibility_type = tasks_service.get_or_create_visibility_type(
+                name=args["name"]
+            )
+            return visibility_type, 201
+        except ValueError:
+            abort(404)
+
+    def get_arguments(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("name", required=True)
+        args = parser.parse_args()
+        return args

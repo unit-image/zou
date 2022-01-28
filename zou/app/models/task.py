@@ -1,5 +1,6 @@
 from sqlalchemy_utils import UUIDType
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import validates
 from zou.app import db
 from zou.app.models.serializer import SerializerMixin
 from zou.app.models.base import BaseMixin
@@ -20,6 +21,37 @@ assignees_table = db.Table(
         primary_key=True,
     ),
 )
+
+
+class VisibilityType(db.Model, BaseMixin, SerializerMixin):
+    """
+    Describes a type of visibility in pipeline: planning, working, etc.
+    """
+
+    name = db.Column(db.String(40), nullable=False)
+    __table_args__ = (
+        db.UniqueConstraint(
+            "name", name="visibility_type_uc"
+        ),
+        db.CheckConstraint(
+            "char_length(name) > 0",
+            name="name_min_length"),
+    )
+
+    @validates("name")
+    def validate_name(self, _, name):
+        """
+        Validates given name to prevent empty strings.
+
+        :param name: Visibility type name
+        :type name: str
+        :raises: ValueError
+        :return: Validated name
+        :rtype: str
+        """
+        if len(name) == 0:
+            raise ValueError('name cannot by empty')
+        return name
 
 
 class Task(db.Model, BaseMixin, SerializerMixin):
@@ -62,6 +94,10 @@ class Task(db.Model, BaseMixin, SerializerMixin):
         UUIDType(binary=False), db.ForeignKey("person.id"), index=True
     )
     assignees = db.relationship("Person", secondary=assignees_table)
+
+    tools_visibility = db.Column(
+        UUIDType(binary=False), db.ForeignKey("visibility_type.id"), index=True
+    )
 
     __table_args__ = (
         db.UniqueConstraint(
