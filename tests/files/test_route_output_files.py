@@ -136,6 +136,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "output_type_id": self.tx_type_id,
             "task_type_id": self.task_type_id,
             "working_file_id": self.working_file_id,
+            "representation": "none"
         }
         result = self.new_output(data)
 
@@ -163,7 +164,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "output_type_id": self.tx_type_id,
             "task_type_id": self.task_type_id,
             "working_file_id": self.working_file_id,
-            "extension": ".tx"
+            "extension": ".tx",
+            "representation": "tx"
         }
         result = self.new_output(data)
         output_file_id = result["id"]
@@ -183,7 +185,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "comment": "test working file publish with extension",
             "output_type_id": self.tx_type_id,
             "task_type_id": self.task_type_id,
-            "extension": ".tx"
+            "extension": ".tx",
+            "representation": "tx"
         }
         result = self.new_output(data)
         output_file_id = result["id"]
@@ -205,7 +208,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "task_type_id": self.task_type_id,
             "working_file_id": self.working_file_id,
             "extension": ".tx",
-            "name": "special"
+            "name": "special",
+            "representation": "tx"
         }
         result = self.new_output(data)
         output_file_id = result["id"]
@@ -228,7 +232,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "working_file_id": self.working_file_id,
             "extension": ".jpg",
             "nb_elements": 50,
-            "name": "special"
+            "name": "special",
+            "representation": "jpg"
         }
         result = self.new_output(data)
         output_file_id = result["id"]
@@ -250,7 +255,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "person_id": self.person_id,
             "output_type_id": self.tx_type_id,
             "task_type_id": self.task_type_id,
-            "working_file_id": self.working_file_id
+            "working_file_id": self.working_file_id,
+            "representation": "none"
         }
         result = self.new_output(data)
         result = self.new_output(data)
@@ -279,7 +285,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "output_type_id": self.tx_type_id,
             "task_type_id": self.task_type_id,
             "working_file_id": self.working_file_id,
-            "revision": 66
+            "revision": 66,
+            "representation": "none"
         }
         result = self.new_output(data)
 
@@ -305,7 +312,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "output_type_id": self.tx_type_id,
             "task_type_id": self.task_type_id,
             "working_file_id": self.working_file_id,
-            "revision": 66
+            "revision": 66,
+            "representation": "none"
         }
         self.new_output(data)
         self.new_output(data, 400)
@@ -432,7 +440,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "comment": "test working file publish",
             "output_type_id": self.cache_type_id,
             "task_type_id": self.task_type_animation.id,
-            "working_file_id": self.working_file_id
+            "working_file_id": self.working_file_id,
+            "representation": "none"
         }
         self.post(
             "data/asset-instances/%s/entities/%s/output-files/new" % (
@@ -472,7 +481,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "comment": "test working file publish",
             "output_type_id": self.cache_type_id,
             "task_type_id": self.task_type_animation.id,
-            "working_file_id": self.working_file_id
+            "working_file_id": self.working_file_id,
+            "representation": "none"
         }
         output_file = self.post(
             "data/asset-instances/%s/entities/%s/output-files/new" % (
@@ -548,7 +558,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "comment": "test working file publish",
             "output_type_id": self.tx_type_id,
             "task_type_id": self.task_type.id,
-            "working_file_id": self.working_file_id
+            "working_file_id": self.working_file_id,
+            "representation": "none"
         }
         self.post(
             "data/asset-instances/%s/entities/%s/output-files/new" % (
@@ -586,7 +597,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "comment": "test working file publish",
             "output_type_id": self.tx_type_id,
             "task_type_id": self.task_type_id,
-            "working_file_id": self.working_file_id
+            "working_file_id": self.working_file_id,
+            "representation": "none"
         }
         output_file = self.post(
             "data/asset-instances/%s/entities/%s/output-files/new" % (
@@ -624,7 +636,8 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
             "comment": "test working file publish",
             "output_type_id": self.cache_type_id,
             "task_type_id": self.task_type_animation.id,
-            "working_file_id": self.working_file_id
+            "working_file_id": self.working_file_id,
+            "representation": "none"
         }
         self.post(
             "data/asset-instances/%s/entities/%s/output-files/new" % (

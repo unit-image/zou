@@ -159,7 +159,8 @@ class FileServiceTestCase(ApiDBTestCase):
             self.working_file.id,
             self.output_type.id,
             self.person.id,
-            self.task_type.id
+            self.task_type.id,
+            representation="none"
         )
         self.assertEqual(output_file["revision"], 1)
         output_file = files_service.create_new_output_revision(
@@ -167,7 +168,8 @@ class FileServiceTestCase(ApiDBTestCase):
             self.working_file.id,
             self.output_type.id,
             self.person.id,
-            self.task_type.id
+            self.task_type.id,
+            representation="none"
         )
         self.assertEqual(output_file["revision"], 2)
         output_file = files_service.get_last_output_revision(
@@ -184,7 +186,8 @@ class FileServiceTestCase(ApiDBTestCase):
                 self.output_type.id,
                 self.person.id,
                 self.task_type.id,
-                revision=1
+                revision=1,
+                representation="none"
             )
 
     def test_get_last_output_files_for_entity(self):

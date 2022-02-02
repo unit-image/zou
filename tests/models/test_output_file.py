@@ -50,7 +50,8 @@ class OutputFileTestCase(ApiDBTestCase):
             "comment": "Test comment",
             "size": 1024,
             "person_id": self.person.id,
-            "file_status_id": self.file_status.id
+            "file_status_id": self.file_status.id,
+            "representation": "none"
         }
         self.file_status_id = self.file_status.id
         self.output_file = self.post("data/output-files", data)

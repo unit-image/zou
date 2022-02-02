@@ -1,4 +1,4 @@
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from sqlalchemy_utils import UUIDType
 
 from zou.app import db
@@ -25,7 +25,7 @@ class OutputFile(db.Model, BaseMixin, SerializerMixin):
     comment = db.Column(db.Text())
     extension = db.Column(db.String(10))
     revision = db.Column(db.Integer(), nullable=False)
-    representation = db.Column(db.String(20), index=True)
+    representation = db.Column(db.String(20), index=True, nullable=False)
     nb_elements = db.Column(db.Integer(), default=1)
     source = db.Column(db.String(40))
     path = db.Column(db.String(400))
@@ -68,7 +68,45 @@ class OutputFile(db.Model, BaseMixin, SerializerMixin):
             "revision",
             name="output_file_uc",
         ),
+        db.CheckConstraint(
+            "char_length(name) > 0",
+            name="name_min_length"
+        ),
+        db.CheckConstraint(
+            "char_length(representation) > 0",
+            name="representation_min_length"
+        ),
     )
 
     def __repr__(self):
         return "<OutputFile %s>" % self.id
+
+    @validates("name")
+    def validate_name(self, _, name):
+        """
+        Validates given name to prevent empty strings.
+
+        :param name: Output file name
+        :type name: str
+        :raises: ValueError
+        :return: Validated name
+        :rtype: str
+        """
+        if len(name) == 0:
+            raise ValueError("name cannot by empty")
+        return name
+
+    @validates("representation")
+    def validate_representation(self, _, representation):
+        """
+        Validates given representation to prevent empty strings.
+
+        :param representation: Output file representation
+        :type representation: str
+        :raises: ValueError
+        :return: Validated representation
+        :rtype: str
+        """
+        if len(representation) == 0:
+            raise ValueError("representation cannot by empty")
+        return representation

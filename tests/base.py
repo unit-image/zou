@@ -827,7 +827,7 @@ class ApiDBTestCase(ApiTestCase):
         output_type=None,
         revision=1,
         name="main",
-        representation="",
+        representation="none",
         asset_instance=None,
         temporal_entity_id=None,
         task=None
