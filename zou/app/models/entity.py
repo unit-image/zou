@@ -109,6 +109,9 @@ class Entity(db.Model, BaseMixin, SerializerMixin):
     instance_casting = db.relationship(
         "AssetInstance", secondary="asset_instance_link", backref="shots"
     )
+    entity_status_id = db.Column(
+        UUIDType(binary=False), db.ForeignKey("entity_status.id"), index=True
+    )
 
     __table_args__ = (
         db.UniqueConstraint(

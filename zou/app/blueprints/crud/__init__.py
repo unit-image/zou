@@ -8,6 +8,7 @@ from .comments import CommentsResource, CommentResource
 from .custom_action import CustomActionsResource, CustomActionResource
 from .department import DepartmentsResource, DepartmentResource
 from .entity import EntityResource, EntitiesResource
+from .entity_status import EntityStatusesResource, EntityStatusResource
 from .entity_type import EntityTypesResource, EntityTypeResource
 from .entity_link import EntityLinksResource, EntityLinkResource
 from .event import EventsResource, EventResource
@@ -53,6 +54,8 @@ routes = [
     ("/data/task-types/<instance_id>", TaskTypeResource),
     ("/data/task-status", TaskStatusesResource),
     ("/data/task-status/<instance_id>", TaskStatusResource),
+    ("/data/entity-status", EntityStatusesResource),
+    ("/data/entity-status/<instance_id>", EntityStatusResource),
     ("/data/tasks", TasksResource),
     ("/data/tasks/<instance_id>", TaskResource),
     ("/data/departments", DepartmentsResource),
