@@ -64,6 +64,9 @@ class ImportShotgunPersonsResource(BaseImportShotgunResource):
                 if person.password is None or len(person.password) == 0:
                     data["password"] = auth.encrypt_password("default")
 
+                person.update(data)
+                current_app.logger.info("Person updated: %s" % person)
+
             # create or update a department/person link if needed
             if imported_department:
                 department_person_link = \
