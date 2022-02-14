@@ -1309,6 +1309,22 @@ def get_or_create_visibility_type(name):
     return visibility_type.serialize()
 
 
+def delete_visibility_type(visibility_type_id):
+    """
+    Delete visibility type and set tasks tools_visibility using this type
+    to NULL.
+    """
+    visibility_type = VisibilityType.get(visibility_type_id)
+
+    if visibility_type is None:
+        return
+
+    for task in Task.get_all_by(tools_visibility=visibility_type.id):
+        task.update({"tools_visibility": None})
+
+    visibility_type.delete()
+
+
 @cache.memoize_function(120)
 def get_full_task(task_id):
     task = get_task_with_relations(task_id)

@@ -663,19 +663,45 @@ class ProjectPreviewFilesResource(Resource, ArgsMixin):
 
 class VisibilityType(Resource, ArgsMixin):
     """
-    Retrieves a Visibility Type by its id.
+    Manage Visibility Types.
     """
     @jwt_required
-    def get(self, visibility_type_id):
-        return tasks_service.get_visibility_type(visibility_type_id)
+    def get(self, instance_id):
+        """
+        Retrieves a visibility type using its id
 
+        :param instance_id: Visibility type id
+        :type instance_id: str
+        :return: Serialized visibility type data
+        :rtype: dict
+        """
+        return tasks_service.get_visibility_type(instance_id)
 
-class AddVisibilityType(Resource, ArgsMixin):
-    """
-    Creates a Visibility Type using given name.
-    """
     @jwt_required
-    def post(self):
+    def delete(self, instance_id):
+        """
+        Deletes a visibility type
+
+        :param instance_id: Visibility type id
+        :type instance_id: str
+        :return: Deletion status
+        :rtype: tuple(str, int)
+        """
+        tasks_service.delete_visibility_type(
+            visibility_type_id=instance_id
+        )
+        return "", 204
+
+    @jwt_required
+    def put(self, instance_id):
+        """
+        Creates a visibility type with name passed in request arguments
+
+        :param instance_id: Visibility type id (not used)
+        :type instance_id: str
+        :return: Creation status
+        :rtype: tuple(dict, int)
+        """
         args = self.get_arguments()
 
         try:
@@ -687,6 +713,10 @@ class AddVisibilityType(Resource, ArgsMixin):
             abort(404)
 
     def get_arguments(self):
+        """
+        :return: Request arguments
+        :rtype: dict
+        """
         parser = reqparse.RequestParser()
         parser.add_argument("name", required=True)
         args = parser.parse_args()

@@ -28,8 +28,7 @@ from .resources import (
     GetTimeSpentResource,
     SetTimeSpentResource,
     AddTimeSpentResource,
-    VisibilityType,
-    AddVisibilityType
+    VisibilityType
 )
 
 
@@ -38,6 +37,7 @@ routes = [
     ("/data/tasks/<task_id>/comments/<comment_id>", TaskCommentResource),
     ("/data/tasks/<task_id>/previews", TaskPreviewsResource),
     ("/data/tasks/<task_id>/full", TaskFullResource),
+    ("/data/tasks/visibility-types/<instance_id>", VisibilityType),
     ("/data/persons/<person_id>/tasks", PersonTasksResource),
     ("/data/persons/<person_id>/done-tasks", PersonDoneTasksResource),
     (
@@ -88,8 +88,6 @@ routes = [
         "/actions/projects/<project_id>/task-types/<task_type_id>/assets/create-tasks",
         CreateAssetTasksResource,
     ),
-    ("/actions/tasks/visibility-types/<visibilty_type_id>", VisibilityType),
-    ("/actions/tasks/visibility-types/add", AddVisibilityType)
 ]
 
 blueprint = Blueprint("tasks", "tasks")
