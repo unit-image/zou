@@ -39,7 +39,8 @@ class ImportShotgunShotTestCase(ShotgunTestCase):
             "sg_cut_duration": 122,
             "sg_custom_field": "test",
             "type": "Shot",
-            "id": 1
+            "id": 1,
+            "sg_status_list": "wtg",
         }
 
     def test_import_shot(self):

@@ -48,6 +48,7 @@ class ImportShotgunAssetTestCase(ShotgunTestCase):
                 "name": "Agent 327"
             },
             "sg_asset_type": "Props",
+            "sg_status_list": "wtg",
             "type": "Asset",
             "parents": [{"type": "Asset", "id": 1}],
             "id": 3
@@ -85,6 +86,7 @@ class ImportShotgunAssetTestCase(ShotgunTestCase):
             },
             "sg_asset_type": "Props",
             "type": "Asset",
+            "sg_status_list": "wtg",
             "parents": [],
             "id": 3
         }
@@ -118,6 +120,7 @@ class ImportShotgunAssetTestCase(ShotgunTestCase):
             "sg_asset_type": "Props",
             "type": "Asset",
             "parents": [],
+            "sg_status_list": "wtg",
             "id": 3
         }
 
@@ -164,6 +167,7 @@ class ImportShotgunAssetTestCase(ShotgunTestCase):
             "sg_asset_type": "Props",
             "type": "Asset",
             "parents": [{"type": "Asset", "id": 1}],
+            "sg_status_list": "wtg",
             "id": 3
         }
 

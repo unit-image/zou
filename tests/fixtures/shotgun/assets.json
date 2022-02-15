@@ -1,26 +1,28 @@
 [
   {
-    "code": "Sheep", 
-    "description": "Black sheep", 
+    "code": "Sheep",
+    "description": "Black sheep",
     "project": {
-      "type": "Project", 
-      "id": 1, 
+      "type": "Project",
+      "id": 1,
       "name": "Cosmos Landraumat"
-    }, 
-    "sg_asset_type": "Character", 
-    "type": "Asset", 
-    "id": 1
-  }, 
+    },
+    "sg_asset_type": "Character",
+    "type": "Asset",
+    "id": 1,
+    "sg_status_list": "ip"
+  },
   {
-    "code": "Tom", 
-    "description": null, 
+    "code": "Tom",
+    "description": null,
     "project": {
-      "type": "Project", 
-      "id": 1, 
+      "type": "Project",
+      "id": 1,
       "name": "Cosmos Landraumat"
-    }, 
-    "sg_asset_type": "Character", 
-    "type": "Asset", 
-    "id": 2 
-  } 
+    },
+    "sg_asset_type": "Character",
+    "type": "Asset",
+    "id": 2,
+    "sg_status_list": "ip"
+  }
 ]

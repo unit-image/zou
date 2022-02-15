@@ -2,6 +2,7 @@ from flask_restful import current_app
 
 from zou.app.models.project import Project
 from zou.app.models.entity import Entity
+from zou.app.models.entity_status import EntityStatus
 
 from zou.app.services import shots_service
 
@@ -18,6 +19,7 @@ class ImportShotgunShotsResource(BaseImportShotgunResource):
     def prepare_import(self):
         self.shot_type = shots_service.get_shot_type()
         self.project_map = Project.get_id_map(field="name")
+        self.entity_status_ids = EntityStatus.get_id_map(field="short_name")
 
     def extract_status_names(self, sg_projects):
         return {x["sg_status"] for x in sg_projects}
@@ -29,7 +31,9 @@ class ImportShotgunShotsResource(BaseImportShotgunResource):
         sequence_id = self.get_sequence(sg_shot)
         scene_id = self.get_scene(sg_shot)
         assets = self.extract_assets(sg_shot)
-
+        entity_status_id = self.entity_status_ids.get(
+            sg_shot["sg_status_list"], None
+        )
         shot_type = shots_service.get_shot_type()
 
         data = {
@@ -40,6 +44,7 @@ class ImportShotgunShotsResource(BaseImportShotgunResource):
             "parent_id": sequence_id,
             "source_id": scene_id,
             "entities_out": assets,
+            "entity_status_id": entity_status_id,
         }
         data_field_content = {"frame_in": frame_in, "frame_out": frame_out}
         custom_fields.update(data_field_content)

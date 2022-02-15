@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from zou.app.models.project import Project
 from zou.app.models.entity import Entity
 from zou.app.models.entity_type import EntityType
+from zou.app.models.entity_status import EntityStatus
 
 from zou.app.blueprints.source.shotgun.base import (
     BaseImportShotgunResource,
@@ -30,6 +31,7 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
         assets_service.create_asset_types(entity_type_names)
         self.project_ids = Project.get_id_map()
         self.entity_type_ids = EntityType.get_id_map(field="name")
+        self.entity_status_ids = EntityStatus.get_id_map(field="short_name")
         self.parent_map = {}
 
     def extract_entity_type_names(self, sg_assets):
@@ -47,6 +49,9 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
         parent_shotgun_ids = [
             asset["id"] for asset in sg_asset.get("parents", [])
         ]
+        entity_status_id = self.entity_status_ids.get(
+            sg_asset["sg_status_list"], None
+        )
 
         return {
             "name": sg_asset["code"],
@@ -55,6 +60,7 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
             "entity_type_id": entity_type_id,
             "project_id": project_id,
             "parent_shotgun_ids": parent_shotgun_ids,
+            "entity_status_id": entity_status_id,
         }
 
     def import_entry(self, data):

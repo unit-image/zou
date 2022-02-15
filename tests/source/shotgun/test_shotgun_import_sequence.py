@@ -44,7 +44,8 @@ class ImportShotgunSequence(ShotgunTestCase):
             "code": "S04",
             "type": "Sequence",
             "id": 4,
-            "description": "test description"
+            "description": "test description",
+            "sg_status_list": "wtg",
         }
         api_path = "/import/shotgun/sequences"
         self.sequences = self.post(api_path, [sg_sequence], 200)

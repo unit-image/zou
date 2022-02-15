@@ -2,6 +2,7 @@ from flask_restful import current_app
 
 from zou.app.models.project import Project
 from zou.app.models.entity import Entity
+from zou.app.models.entity_status import EntityStatus
 
 from zou.app.services import shots_service
 
@@ -18,11 +19,15 @@ class ImportShotgunScenesResource(BaseImportShotgunResource):
     def prepare_import(self):
         self.scene_type = shots_service.get_shot_type()
         self.project_map = Project.get_id_map(field="name")
+        self.entity_status_ids = EntityStatus.get_id_map(field="short_name")
 
     def extract_data(self, sg_scene):
         project_id = self.get_project(sg_scene, self.project_map)
         sequence_id = self.get_sequence(sg_scene)
         scene_type = shots_service.get_scene_type()
+        entity_status_id = self.entity_status_ids.get(
+            sg_scene["sg_status_list"], None
+        )
 
         data = {
             "name": sg_scene["code"],
@@ -30,6 +35,7 @@ class ImportShotgunScenesResource(BaseImportShotgunResource):
             "project_id": project_id,
             "entity_type_id": scene_type["id"],
             "parent_id": sequence_id,
+            "entity_status_id": entity_status_id,
         }
         return data
 

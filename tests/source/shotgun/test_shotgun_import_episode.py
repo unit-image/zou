@@ -37,7 +37,8 @@ class ImportShotgunEpisode(ShotgunTestCase):
             "code": "E04",
             "type": "Episode",
             "id": 4,
-            "description": "test description"
+            "description": "test description",
+            "sg_status_list": "wtg",
         }
         api_path = "/import/shotgun/episodes"
         self.episodes = self.post(api_path, [sg_episode], 200)

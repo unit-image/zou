@@ -2,6 +2,7 @@ from flask_restful import current_app
 
 from zou.app.models.project import Project
 from zou.app.models.entity import Entity
+from zou.app.models.entity_status import EntityStatus
 from zou.app.services import shots_service
 from zou.app.blueprints.source.shotgun.base import (
     BaseImportShotgunResource,
@@ -14,9 +15,13 @@ class ImportShotgunEpisodesResource(BaseImportShotgunResource):
     def prepare_import(self):
         self.episode_type = shots_service.get_episode_type()
         self.project_map = Project.get_id_map(field="name")
+        self.entity_status_ids = EntityStatus.get_id_map(field="short_name")
 
     def extract_data(self, sg_episode):
         project_id = self.get_project(sg_episode)
+        entity_status_id = self.entity_status_ids.get(
+            sg_episode["sg_status_list"], None
+        )
         if project_id is None:
             raise ShotgunEntryImportFailed
 
@@ -26,6 +31,7 @@ class ImportShotgunEpisodesResource(BaseImportShotgunResource):
             "description": sg_episode["description"],
             "project_id": project_id,
             "entity_type_id": self.episode_type["id"],
+            "entity_status_id": entity_status_id,
         }
 
     def get_project(self, sg_episode):

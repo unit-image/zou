@@ -24,7 +24,8 @@ class ImportShotgunSceneTestCase(ShotgunTestCase):
                 "name": "Agent327"
             },
             "type": "Scene",
-            "id": 4
+            "id": 4,
+            "sg_status_list": "wtg",
         }
 
     def test_import_scene(self):
