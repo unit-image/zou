@@ -12,6 +12,7 @@ from zou.app.models.output_type import OutputType
 from zou.app.models.task_type import TaskType
 from zou.app.models.task import Task
 from zou.app.models.department import Department
+from zou.app.models.project import Project
 
 from zou.app.services import (
     assets_service,
@@ -684,6 +685,13 @@ class PathTokens(object):
     TASK_TYPE = "TaskType"
     TASK = "Task"
     OUTPUT_TYPE = "OutputType"
+    NAME = "Name"
+    REPRESENTATION = "Representation"
+    SOFTWARE = "Software"
+    VERSION = "Version"
+    ENTITY_TYPE = "TemporalEntityType"
+    ENTITY = "TemporalEntity"
+    INSTANCE = "Instance"
 
 
 def get_shot_task_from_path(file_path, project, mode="working", sep="/"):
@@ -794,26 +802,34 @@ def get_path_folders(project, file_path, mode="working", sep="/"):
     return file_path.split(sep)
 
 
-def get_data_from_token(project, name, value):
+def get_data_from_token(name, value, constraints=None):
     """
     Get data from database using token name and value,
     where token name corresponds to data type.
 
-    :param project: Project
-    :type project: dict
     :param name: Token name corresponding to data type
     :type name: str
     :param value: Token value
     :type value: str
+    :param constraints: Token data needed to find data (project, parent, etc.)
+    :type constraints: dict
     :return: First data found in database matching given value
-    :rtype: db.Model
+    :rtype: db.Model or str
     """
+    if not constraints:
+        constraints = {}
     data = None
 
     if name == PathTokens.ASSET:
+        # An asset depends on a project and an asset type
+        if (not constraints.get(PathTokens.PROJECT)
+                or not constraints.get(PathTokens.ASSET_TYPE)):
+            return
+
         data = Entity.get_by_case_insensitive(
             name=value,
-            project_id=project["id"],
+            asset_type_id=constraints[PathTokens.ASSET_TYPE],
+            project_id=constraints[PathTokens.PROJECT]
         )
 
     elif name == PathTokens.ASSET_TYPE:
@@ -823,36 +839,100 @@ def get_data_from_token(project, name, value):
         data = Department.get_by_case_insensitive(name=value)
 
     elif name == PathTokens.EPISODE:
+        # An episode depends on a project
+        if not constraints.get(PathTokens.PROJECT):
+            return
+
         data = Entity.get_by_case_insensitive(
             name=value,
             entity_type_id=shots_service.get_episode_type()["id"],
-            project_id=project["id"],
+            project_id=constraints[PathTokens.PROJECT]
         )
 
     elif name == PathTokens.SEQUENCE:
+        # A sequence depends on a project and an episode
+        if (not constraints.get(PathTokens.PROJECT)
+                or not constraints.get(PathTokens.EPISODE)):
+            return
+
         data = Entity.get_by_case_insensitive(
             name=value,
             entity_type_id=shots_service.get_sequence_type()["id"],
-            project_id=project["id"],
+            parent_id=constraints[PathTokens.EPISODE],
+            project_id=constraints[PathTokens.PROJECT]
         )
 
     elif name == PathTokens.OUTPUT_TYPE:
         data = OutputType.get_by_case_insensitive(name=value)
 
     elif name == PathTokens.SHOT:
+        # A shot depends on a project and a sequence
+        if (not constraints.get(PathTokens.PROJECT)
+                or not constraints.get(PathTokens.SEQUENCE)):
+            return
+
         data = Entity.get_by_case_insensitive(
             name=value,
             entity_type_id=shots_service.get_shot_type()["id"],
-            project_id=project["id"],
+            parent_id=constraints[PathTokens.SEQUENCE],
+            project_id=constraints[PathTokens.PROJECT]
         )
 
     elif name == PathTokens.TASK:
-        data = Task.get_by_case_insensitive(
-            name=value,
-            project_id=project["id"])
+        # A task depends on a project, a task type and an entity
+        if (not constraints.get(PathTokens.PROJECT)
+                or not constraints.get(PathTokens.TASK_TYPE)):
+            return
+
+        kwargs = {
+            "name": value,
+            "task_type_id": constraints[PathTokens.TASK_TYPE],
+            "project_id": constraints[PathTokens.PROJECT]
+        }
+
+        for entity in [PathTokens.SCENE, PathTokens.ASSET, PathTokens.SHOT]:
+            if constraints.get(entity):
+                kwargs["entity_id"] = constraints[entity]
+                break
+        else:
+            return
+
+        data = Task.get_by_case_insensitive(**kwargs)
 
     elif name == PathTokens.TASK_TYPE:
         data = TaskType.get_by_case_insensitive(name=value)
+
+    elif name == PathTokens.PROJECT:
+        data = Project.get_by_case_insensitive(name=value)
+
+    elif name == PathTokens.NAME:
+        data = value
+
+    elif name == PathTokens.REPRESENTATION:
+        data = value
+
+    elif name == PathTokens.VERSION:
+        data = value
+
+    elif name == PathTokens.ENTITY_TYPE:
+        data = EntityType.get_by_case_insensitive(
+            name=value
+        )
+
+    elif name == PathTokens.ENTITY:
+        # An entity depends on a project and an entity type
+        if (not constraints.get(PathTokens.PROJECT)
+                or not constraints.get(PathTokens.ENTITY_TYPE)):
+            return
+
+        data = Entity.get_by_case_insensitive(
+            name=value,
+            entity_type_id=constraints[PathTokens.ENTITY_TYPE],
+            project_id=constraints[PathTokens.PROJECT]
+        )
+
+    elif name == PathTokens.INSTANCE:
+        return value
 
     return data
 
@@ -950,7 +1030,8 @@ def guess_from_path(project_id, file_path, sep="/"):
     :type file_path: str
     :param sep: File path separator, defaults to "/"
     :type sep: str
-    :return: List of dictionaries with template tokens and corresponding ids:
+    :return: List of dictionaries with template tokens and corresponding
+             ids / values:
             | .. code-block:: text
             |   [
             |       {
@@ -973,7 +1054,7 @@ def guess_from_path(project_id, file_path, sep="/"):
     for mode in tree.keys():
         # Apply mode style to file path
         style = tree[mode]["folder_path"].get("style", "")
-        root = root_path = get_root_path(tree, mode, sep)
+        root = get_root_path(tree, mode, sep)
         styled_path = apply_style(file_path, style)
 
         if not styled_path.startswith(root):
@@ -997,15 +1078,30 @@ def guess_from_path(project_id, file_path, sep="/"):
                 continue
 
             template_data = {
-                "Project": project["id"],
                 "Template": template,
             }
 
-            for token, token_value in tokens.items():
-                # Try to get data from database using token and its value
-                data = get_data_from_token(project, token, token_value)
-                if data:
-                    template_data[token] = data.serialize()["id"]
+            # Fill template data dictionary following tokens order in
+            # template path (left to right): some data needs a previous data
+            # to be found.
+            # This prevents getting wrong data in database, like a data
+            # with same name in other project.
+            for template_element in template_elements:
+                for token, token_value in tokens.items():
+                    if "<{}>".format(token) not in template_element:
+                        continue
+
+                    # Try to get data from database using token and its value
+                    data = get_data_from_token(
+                        token, token_value, constraints=template_data)
+
+                    if not data:
+                        continue
+
+                    if isinstance(data, str):
+                        template_data[token] = data
+                    else:
+                        template_data[token] = data.serialize()["id"]
 
             if template_data not in matching_templates:
                 matching_templates.append(template_data)
