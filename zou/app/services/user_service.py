@@ -343,7 +343,8 @@ def check_project_access(project_id):
         project_id
     )
     if not is_allowed:
-        raise permissions.PermissionDenied
+        project = projects_service.get_project(str(project_id))
+        raise permissions.PermissionDenied(project['name'])
     return is_allowed
 
 
