@@ -856,7 +856,8 @@ class LastEntityOutputFilesResource(Resource):
             output_type_id=request.args.get("output_type_id", None),
             task_type_id=request.args.get("task_type_id", None),
             representation=request.args.get("representation", None),
-            file_status_id=request.args.get("file_status_id", None)
+            file_status_id=request.args.get("file_status_id", None),
+            name=request.args.get("name", None)
         )
 
 
@@ -878,7 +879,8 @@ class LastInstanceOutputFilesResource(Resource):
             output_type_id=request.args.get("output_type_id", None),
             task_type_id=request.args.get("task_type_id", None),
             representation=request.args.get("representation", None),
-            file_status_id=request.args.get("file_status_id", None)
+            file_status_id=request.args.get("file_status_id", None),
+            name=request.args.get("name", None)
         )
 
 
