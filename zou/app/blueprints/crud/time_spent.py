@@ -1,5 +1,4 @@
-from flask import request
-from flask_jwt_extended import jwt_required
+from flask import request, abort
 from zou.app.models.time_spent import TimeSpent, TimeSpentStatus
 from zou.app.utils import permissions
 from zou.app.services import user_service
@@ -30,6 +29,21 @@ class TimeSpentsResource(BaseModelsResource):
             user_service.check_person_access(person_id)
 
         return True
+
+    def apply_filters(self, options):
+        query = super(TimeSpentsResource, self).apply_filters(options)
+        start_date = options.get("start_date", None)
+        end_date = options.get("end_date", None)
+        if not start_date and not end_date:
+            return query
+
+        if None in [start_date, end_date]:
+            abort(
+                400,
+                "If querying for a range of dates, both a `start_date` and an "
+                "`end_date` must be given.")
+
+        return query.filter(self.model.date.between(start_date, end_date))
 
 
 class TimeSpentResource(BaseModelResource):

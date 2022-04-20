@@ -118,6 +118,37 @@ class PresenceLogsResource(Resource):
 
 class TimeSpentsResource(Resource):
     """
+    Get time spents for the given person.
+    Optionnaly can accept date range parameters.
+    """
+    @jwt_required
+    def get(self, person_id):
+        permissions.check_admin_permissions()
+        arguments = self.get_arguments()
+        try:
+            if not arguments["start_date"] and not arguments["end_date"]:
+                return time_spents_service.get_time_spents(person_id)
+
+            if None in [arguments["start_date"], arguments["end_date"]]:
+                abort(
+                    400,
+                    "If querying for a range of dates, both a `start_date` and"
+                    " an `end_date` must be given.")
+
+            return time_spents_service.get_time_spents_range(
+                person_id, arguments["start_date"], arguments["end_date"])
+        except WrongDateFormatException:
+            abort(404)
+
+    def get_arguments(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("start_date", default=None)
+        parser.add_argument("end_date", default=None)
+        return parser.parse_args()
+
+
+class DateTimeSpentsResource(Resource):
+    """
     Get time spents for given person and date.
     """
 

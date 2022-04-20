@@ -11,6 +11,7 @@ from .resources import (
     PersonDayTimeSpentsResource,
     PresenceLogsResource,
     TimeSpentsResource,
+    DateTimeSpentsResource,
     TimeSpentMonthResource,
     TimeSpentMonthsResource,
     TimeSpentWeekResource,
@@ -25,7 +26,8 @@ routes = [
     ("/data/persons/<person_id>/desktop-login-logs", DesktopLoginsResource),
     ("/data/persons/presence-logs/<month_date>", PresenceLogsResource),
 
-    ("/data/persons/<person_id>/time-spents/<date>", TimeSpentsResource),
+    ("/data/persons/<person_id>/time-spents", TimeSpentsResource),
+    ("/data/persons/<person_id>/time-spents/<date>", DateTimeSpentsResource),
     (
         "/data/persons/<person_id>/time-spents/year/<year>",
         PersonYearTimeSpentsResource,
