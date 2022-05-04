@@ -28,7 +28,9 @@ class ImportShotgunStepsResource(BaseImportShotgunResource):
         }
 
     def extract_color(self, sg_step):
-        color = sg_step.get("color", "0,0,0")
+        color = sg_step.get("color")
+        if not color:
+            color = "0,0,0"
         return colors.rgb_to_hex(color)
 
     def extract_department_name(self, sg_step):
