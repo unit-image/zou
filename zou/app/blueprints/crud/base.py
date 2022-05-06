@@ -25,9 +25,9 @@ class BaseModelsResource(Resource):
 
         return self.model.serialize_list(query.all(), relations=relations)
 
-    def paginated_entries(self, query, page, relations=False):
+    def paginated_entries(self, query, page, limit=None, relations=False):
         total = query.count()
-        limit = current_app.config["NB_RECORDS_PER_PAGE"]
+        limit = limit or current_app.config["NB_RECORDS_PER_PAGE"]
         offset = (page - 1) * limit
 
         nb_pages = int(math.ceil(total / float(limit)))
@@ -139,12 +139,13 @@ class BaseModelsResource(Resource):
                 options = request.args
                 query = self.apply_filters(options)
                 page = int(options.get("page", "-1"))
-                relations = options.get("relations", "false") == "true"
+                limit = int(options.get("limit", "0"))
+                relations = options.get("relations", "false").lower() == "true"
                 is_paginated = page > -1
 
                 if is_paginated:
                     return self.paginated_entries(
-                        query, page, relations=relations
+                        query, page, limit=limit, relations=relations
                     )
                 else:
                     return self.all_entries(query, relations=relations)
