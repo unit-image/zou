@@ -417,6 +417,7 @@ def update_variable(
     representation="",
     revision=1,
     style="lowercase",
+    remove_not_found=True,
 ):
     variables = re.findall("<([\w\.]*)>", template)
 
@@ -447,12 +448,50 @@ def update_variable(
             field=field,
         )
 
-        if data is not None:
+        if data is not None or remove_not_found:
+            data = data or ""
             render = render.replace(
                 "<%s>" % variable,
                 apply_style(slugify(data, separator="_"), style),
             )
     return render
+
+
+def build_path(
+        project,
+        mode="working",
+        entity=None,
+        task=None,
+        task_type=None,
+        software=None,
+        output_type=None,
+        asset_instance=None,
+        asset=None,
+        sep=os.sep,
+):
+    """
+    Return path to an entity's directory or one of its parent directories,
+    down to the last fully specified folder.
+    """
+    tree = get_tree_from_project(project)
+    template = get_folder_path_template(tree, mode, entity)
+    folder_path = update_variable(
+        template,
+        entity=entity,
+        task=task,
+        task_type=task_type,
+        software=software,
+        output_type=output_type,
+        asset_instance=asset_instance,
+        asset=asset,
+        remove_not_found=False,
+    )
+    # Only keep the part of the path that has been resolved.
+    folder_path = folder_path.split("<", 1)[0]
+
+    root_path = get_root_path(tree, mode, sep)
+    path = "".join([root_path, folder_path])
+    return path
 
 
 def get_folder_from_datatype(
@@ -518,48 +557,48 @@ def get_folder_from_datatype(
 
 
 def get_folder_from_project(entity):
+    entity = entity or {}
     project = get_project(entity)
-    return project["name"]
+    return project.get("name")
 
 
 def get_folder_from_task(task):
-    return task["name"]
+    task = task or {}
+    return task.get("name")
 
 
 def get_folder_from_shot(shot):
-    return shot["name"]
+    shot = shot or {}
+    return shot.get("name")
 
 
 def get_folder_from_output_type(output_type, field="name"):
     if output_type is None:
         output_type = files_service.get_or_create_output_type("Geometry")
 
-    return output_type[field].lower()
+    return output_type.get(field, "").lower() or None
 
 
 def get_folder_from_department(task, field="name"):
-    folder = ""
-    department = tasks_service.get_department_from_task(task["id"])
-    folder = department[field]
-    return folder
+    task = task or {}
+    department = tasks_service.get_department_from_task(task.get("id"))
+    return department.get(field)
 
 
 def get_folder_from_task_type(task, task_type, field="name"):
-    folder = ""
-    if task_type is None and task is not None:
-        task_type = tasks_service.get_task_type(task["task_type_id"])
-        if task_type is not None:
-            folder = task_type[field]
-    elif task_type is not None:
-        folder = task_type[field]
+    folder = None
+    task = task or {}
+    task_type = task_type or {}
+    if not task_type and task:
+        task_type = tasks_service.get_task_type(task.get("task_type_id"))
+    if task_type:
+        folder = task_type.get(field)
     return folder
 
 
 def get_folder_from_asset(asset):
-    folder = ""
-    if asset is not None:
-        folder = asset["name"]
-    return folder
+    asset = asset or {}
+    return asset.get("name")
 
 
 def get_folder_from_sequence(entity):
@@ -620,20 +659,17 @@ def get_folder_from_asset_type(asset):
 
 
 def get_folder_from_software(software, field="name"):
-    if software is None:
-        software = files_service.get_or_create_software("3dsmax", "max", ".max")
-    return software[field]
+    software = software or {}
+    return software.get(field)
 
 
 def get_folder_from_scene(scene):
-    folder = ""
-    if scene is not None:
-        folder = scene["name"]
-    return folder
+    scene = scene or {}
+    return scene.get("name")
 
 
 def get_folder_from_asset_instance(asset_instance, field):
-    folder = ""
+    folder = None
     if asset_instance is not None:
         number = str(asset_instance.get("number", 0)).zfill(4)
         if field == "name":

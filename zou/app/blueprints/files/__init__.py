@@ -2,6 +2,7 @@ from flask import Blueprint
 from zou.app.utils.api import configure_api_from_blueprint
 
 from .resources import (
+    EntityPathResource,
     WorkingFilePathResource,
     LastWorkingFilesResource,
     ModifiedFileResource,
@@ -36,6 +37,10 @@ routes = [
     (
         "/data/tasks/<task_id>/working-files/last-revisions",
         LastWorkingFilesResource,
+    ),
+    (
+        "/data/entities/<entity_id>/path",
+        EntityPathResource,
     ),
     ("/data/tasks/<task_id>/working-file-path", WorkingFilePathResource),
     (

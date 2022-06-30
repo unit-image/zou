@@ -112,6 +112,73 @@ class WorkingFileFileResource(Resource):
         return working_file, 201
 
 
+class EntityPathResource(Resource):
+    """
+    Get path to the given entity's directory, or one of its parent directories,
+    depending on the given information.
+
+    TODO: This could also handle the other params that can be passed to
+      file_tree_service.build_path(), however more error handling would be
+      needed.
+    """
+
+    @jwt_required
+    def get(self, entity_id):
+        """
+        Optional accepted args:
+            - "mode": Mode, i.e. "working" (default), "output", "preview", ...
+            - "task_type_id": Task type id. If not given, the path might lead only to a parent folder of the entity.
+            - "task_id": Task id: If not given, the path might lead only to a parent folder of the entity.
+
+        :param entity_id: Entity id.
+        :type entity_id: str
+        :return: Path to entity folder or one of its parents.
+        :rtype: str
+        """
+        entity = entities_service.get_entity(entity_id)
+        mode = request.args.get("mode", "working")
+        task_type_id = request.args.get("task_type_id")
+        task_id = request.args.get("task_id")
+
+        project_id = entity["project_id"]
+        user_service.check_project_access(project_id)
+
+        if task_id:
+            task = tasks_service.get_task(task_id)
+            if task_type_id:
+                if task_type_id != task["task_type_id"]:
+                    abort(
+                        400,
+                        "The given task_type_id is different from the one associated with the given task_id.\n"
+                        "{} != {}".format(task_type_id, task["task_type_id"])
+                    )
+
+            else:
+                task_type_id = task["task_type_id"]
+
+            if entity_id != task["entity_id"]:
+                abort(
+                    400,
+                    "The given entity_id is different from the one associated with the given task_id.\n"
+                    "{} != {}".format(entity_id, task["entity_id"])
+                )
+        else:
+            task = None
+
+        task_type = tasks_service.get_task_type(task_type_id) if task_type_id else None
+        project = projects_service.get_project(project_id)
+
+        path = file_tree_service.build_path(
+            project,
+            mode=mode,
+            entity=entity,
+            task=task,
+            task_type=task_type,
+        )
+
+        return path
+
+
 class WorkingFilePathResource(Resource):
     """
     Generate from file tree template a working file path based on several
