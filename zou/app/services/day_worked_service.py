@@ -89,8 +89,7 @@ def get_month_days_worked(person_id, year, month):
     year = int(year)
     month = int(month)
     if (
-        year > datetime.datetime.now().year
-        or year < 2010
+        year < 2010
         or month < 1
         or month > 12
     ):
