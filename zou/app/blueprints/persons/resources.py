@@ -381,3 +381,50 @@ class InvitePersonResource(Resource):
         permissions.check_admin_permissions()
         persons_service.invite_person(person_id)
         return {"success": True, "message": "Email sent"}
+
+
+class WorkLocationResource(Resource):
+    """
+    Manage Work Location.
+    """
+    @jwt_required
+    def get(self, instance_id):
+        """
+        Retrieves a work location using its id
+
+        :param instance_id: work location id
+        :type instance_id: str
+        :return: Serialized work location data
+        :rtype: dict
+        """
+        return day_worked_service.get_work_location(instance_id)
+
+    @jwt_required
+    def put(self, instance_id):
+        """
+        Creates a work location with name passed in request arguments
+
+        :param instance_id: work location id (not used)
+        :type instance_id: str
+        :return: Creation status
+        :rtype: tuple(dict, int)
+        """
+        args = self.get_arguments()
+
+        try:
+            work_location = day_worked_service.get_or_create_work_location(
+                name=args["name"]
+            )
+            return work_location, 201
+        except ValueError:
+            abort(404)
+
+    def get_arguments(self):
+        """
+        :return: Request arguments
+        :rtype: dict
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("name", required=True)
+        args = parser.parse_args()
+        return args

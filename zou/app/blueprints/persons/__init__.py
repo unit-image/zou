@@ -18,7 +18,8 @@ from .resources import (
     TimeSpentYearsResource,
     PersonDayWorkedResource,
     PersonDayWorkedMonthResource,
-    PersonYearTimeSpentsResource
+    PersonYearTimeSpentsResource,
+    WorkLocationResource,
 )
 
 routes = [
@@ -63,6 +64,7 @@ routes = [
         "/data/persons/<person_id>/days_worked/<year>/<month>",
         PersonDayWorkedMonthResource,
     ),
+    ("/data/work-location/<instance_id>", WorkLocationResource),
     ("/actions/persons/<person_id>/invite", InvitePersonResource),
 ]
 

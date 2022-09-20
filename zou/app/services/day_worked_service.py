@@ -2,7 +2,7 @@ import datetime
 from dateutil import relativedelta
 
 from sqlalchemy.exc import DataError
-from zou.app.models.day_worked import DayWorked
+from zou.app.models.day_worked import DayWorked, WorkLocation
 from zou.app.utils import events
 from zou.app.services.exception import WrongDateFormatException
 
@@ -107,3 +107,28 @@ def get_month_days_worked(person_id, year, month):
         query = query.filter(day_worked_filter)
 
     return DayWorked.serialize_list(query.all())
+
+
+def get_work_location(work_location_id):
+    """
+    Get work location data from a given id.
+
+    :return: Serialized work location data
+    :rtype: dict
+    """
+    work_location = WorkLocation.get(work_location_id)
+    return work_location.serialize()
+
+
+def get_or_create_work_location(name):
+    """
+    Create a new work location if it doesn't exist.
+    If it exists, it returns the type from database.
+    """
+    work_location = WorkLocation.get_by(name=name)
+    if work_location is None:
+        work_location = WorkLocation.create(name=name)
+        events.emit(
+            "work-location:new",
+            {"work_location_id": work_location.id})
+    return work_location.serialize()

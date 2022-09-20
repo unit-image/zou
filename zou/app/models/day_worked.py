@@ -25,3 +25,15 @@ class DayWorked(db.Model, BaseMixin, SerializerMixin):
             "person_id", "date", name="day_worked_uc"
         ),
     )
+
+
+class WorkLocation(db.Model, BaseMixin, SerializerMixin):
+    """
+    Describes the location where a person can work.
+    """
+    name = db.Column(
+        db.String(20),
+        unique=True,
+        nullable=False,
+        index=True,
+        default="undefined")
