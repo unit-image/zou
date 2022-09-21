@@ -20,6 +20,10 @@ class DayWorked(db.Model, BaseMixin, SerializerMixin):
 
     justification = db.Column(db.Text())
 
+    work_location_id = db.Column(
+        UUIDType(binary=False), db.ForeignKey("work_location.id"), index=True
+    )
+
     __table_args__ = (
         db.UniqueConstraint(
             "person_id", "date", name="day_worked_uc"
