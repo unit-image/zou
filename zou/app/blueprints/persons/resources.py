@@ -271,7 +271,8 @@ class PersonDayWorkedResource(Resource):
                 date,
                 work_duration=args.get("work_duration"),
                 variable_time=args.get("variable_time"),
-                justification=args.get("justification")
+                justification=args.get("justification"),
+                work_location_id=args.get("work_location_id"),
             )
             return day_worked, 201
         except ValueError:
@@ -285,6 +286,7 @@ class PersonDayWorkedResource(Resource):
         parser.add_argument("variable_time", default=0, type=int)
         parser.add_argument("person_id")
         parser.add_argument("justification")
+        parser.add_argument("work_location_id")
         args = parser.parse_args()
         return args
 

@@ -12,7 +12,8 @@ def create_or_update_day_worked(
         date,
         work_duration=100,
         variable_time=0,
-        justification=None):
+        justification=None,
+        work_location_id=None):
     """
     Create a new time spent if it doesn't exist. If it exists, it updates it
     with the new duratin and returns it from the database.
@@ -35,6 +36,9 @@ def create_or_update_day_worked(
         if justification:
             day_worked.update({"justification": justification})
 
+        if work_location_id:
+            day_worked.update({"work_location_id": work_location_id})
+
         events.emit(
             "day_worked:update",
             {"day_worked_id": str(day_worked.id)}
@@ -45,7 +49,8 @@ def create_or_update_day_worked(
             date=date,
             work_duration=work_duration,
             variable_time=variable_time,
-            justification=justification
+            justification=justification,
+            work_location_id=work_location_id,
         )
         events.emit(
             "day_worked:new",
