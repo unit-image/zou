@@ -37,7 +37,7 @@ from .task_status import TaskStatusesResource, TaskStatusResource
 from .task import TasksResource, TaskResource
 from .time_spent import TimeSpentsResource, TimeSpentResource, TimeSpentStatusesResource
 from .working_file import WorkingFilesResource, WorkingFileResource
-from .day_worked import WorkLocationResource
+from .day_worked import WorkLocationsResource, WorkLocationResource
 
 
 routes = [
@@ -107,6 +107,7 @@ routes = [
     ("/data/entity-links/", EntityLinksResource),
     ("/data/entity-links/<instance_id>", EntityLinkResource),
     ("/data/work-location/<instance_id>", WorkLocationResource),
+    ("/data/work-locations", WorkLocationsResource),
 ]
 
 blueprint = Blueprint("/data", "data")
