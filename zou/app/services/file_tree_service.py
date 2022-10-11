@@ -1090,7 +1090,7 @@ def guess_from_path(project_id, file_path, sep="/"):
     for mode in tree.keys():
         # Apply mode style to file path
         style = tree[mode]["folder_path"].get("style", "")
-        root = get_root_path(tree, mode, sep)
+        root = apply_style(get_root_path(tree, mode, sep), style)
         styled_path = apply_style(file_path, style)
 
         if not styled_path.startswith(root):
