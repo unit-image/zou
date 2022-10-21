@@ -6,6 +6,10 @@ from zou.app.models.day_worked import DayWorked, WorkLocation
 from zou.app.utils import events
 from zou.app.services.exception import WrongDateFormatException
 
+from zou.app.services.base_service import (
+    get_or_create_instance_by_name,
+)
+
 
 def create_or_update_day_worked(
         person_id,
@@ -137,10 +141,4 @@ def get_or_create_work_location(name):
     :return: Serialized work location data
     :rtype: dict
     """
-    work_location = WorkLocation.get_by(name=name)
-    if work_location is None:
-        work_location = WorkLocation.create(name=name)
-        events.emit(
-            "work-location:new",
-            {"work_location_id": work_location.id})
-    return work_location.serialize()
+    return get_or_create_instance_by_name(WorkLocation, name=name)
