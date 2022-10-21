@@ -16,7 +16,7 @@ def create_or_update_day_worked(
         work_location_id=None):
     """
     Create a new time spent if it doesn't exist. If it exists, it updates it
-    with the new duratin and returns it from the database.
+    with the new duration and returns it from the database.
     """
     try:
         day_worked = DayWorked.get_by(
@@ -132,7 +132,10 @@ def get_work_location(work_location_id):
 def get_or_create_work_location(name):
     """
     Create a new work location if it doesn't exist.
-    If it exists, it returns the type from database.
+    If it exists, it returns the location from database.
+
+    :return: Serialized work location data
+    :rtype: dict
     """
     work_location = WorkLocation.get_by(name=name)
     if work_location is None:
