@@ -44,6 +44,10 @@ def create_or_update_day_worked(
             {"day_worked_id": str(day_worked.id)}
         )
     else:
+        if work_location_id is None:
+            undefined_work_location = get_or_create_work_location("undefined")
+            work_location_id = undefined_work_location["id"]
+
         day_worked = DayWorked.create(
             person_id=person_id,
             date=date,
