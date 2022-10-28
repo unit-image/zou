@@ -133,6 +133,32 @@ class SceneCameraInstancesResource(Resource):
         return breakdown_service.get_camera_instances_for_scene(scene_id)
 
 
+class EpisodeAssetInstancesResource(Resource, ArgsMixin):
+    @jwt_required
+    def get(self, episode_id):
+        """
+        Retrieve all asset instances linked to episode.
+        """
+        episode = shots_service.get_episode(episode_id)
+        user_service.check_project_access(episode["project_id"])
+        return breakdown_service.get_asset_instances_for_episode(episode_id)
+
+    @jwt_required
+    def post(self, episode_id):
+        """
+        Create an asset instance on given episode.
+        """
+        args = self.get_args(
+            [("asset_id", None, True), ("description", None, False)]
+        )
+        episode = shots_service.get_episode(episode_id)
+        user_service.check_project_access(episode["project_id"])
+        asset_instance = breakdown_service.add_asset_instance_to_episode(
+            episode_id, args["asset_id"], args["description"]
+        )
+        return asset_instance, 201
+
+
 class ProjectEntityLinksResource(Resource):
     @jwt_required
     def get(self, project_id):
