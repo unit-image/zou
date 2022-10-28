@@ -430,6 +430,85 @@ def remove_asset_instance_for_shot(shot_id, asset_instance_id):
     return shot.serialize()
 
 
+def add_asset_instance_to_episode(episode_id, asset_id, description=""):
+    """
+    Create a new asset instance for given asset and episode.
+    """
+    last_instance = (
+        AssetInstance.query.filter(AssetInstance.episode_id == episode_id)
+        .filter(AssetInstance.asset_id == asset_id)
+        .order_by(desc(AssetInstance.number))
+        .first()
+    )
+
+    number = 1
+    if last_instance is not None:
+        number = last_instance.number + 1
+    name = build_asset_instance_name(asset_id, number)
+
+    asset_instance = AssetInstance.create(
+        asset_id=asset_id,
+        episode_id=episode_id,
+        number=number,
+        name=name,
+        description=description,
+    ).serialize()
+
+    events.emit(
+        "asset_instance:new",
+        {
+            "episode_id": episode_id,
+            "asset_id": asset_id,
+            "asset_instance_id": asset_instance["id"],
+        }
+    )
+    return asset_instance
+
+
+def get_asset_instances_for_episode(episode_id, asset_type_id=None):
+    """
+    Return all asset instances for given episode.
+    """
+    query = AssetInstance.query.filter(
+        AssetInstance.episode_id == episode_id
+    ).order_by(AssetInstance.asset_id, AssetInstance.number)
+
+    if asset_type_id is not None:
+        query = query.join(Entity, AssetInstance.asset_id == Entity.id).filter(
+            Entity.entity_type_id == asset_type_id
+        )
+
+    asset_instances = query.all()
+
+    result = {}
+    for asset_instance in asset_instances:
+        asset_id = str(asset_instance.asset_id)
+        if asset_id not in result:
+            result[asset_id] = []
+        result[asset_id].append(asset_instance.serialize())
+    return result
+
+
+def get_episode_asset_instances_for_asset(asset_id):
+    """
+    Return all asset instances of an asset casted in layout episodes.
+    """
+    asset_instances = (
+        AssetInstance.query.filter(AssetInstance.asset_id == asset_id)
+        .order_by(AssetInstance.asset_id, AssetInstance.number)
+        .all()
+    )
+
+    result = {}
+    for asset_instance in asset_instances:
+        episode_id = str(asset_instance.episode_id)
+        if episode_id not in result:
+            result[episode_id] = []
+        result[episode_id].append(asset_instance.serialize())
+
+    return result
+
+
 def build_asset_instance_name(asset_id, number):
     """
     Helpers to generate normalized asset instance name. It is used to build

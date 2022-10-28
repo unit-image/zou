@@ -19,6 +19,7 @@ class BreakdownServiceTestCase(ApiDBTestCase):
         self.generate_fixture_asset_character()
         self.shot_id = str(self.shot.id)
         self.scene_id = str(self.scene.id)
+        self.episode_id = str(self.episode.id)
         self.asset_id = str(self.asset.id)
         self.asset_character_id = str(self.asset_character.id)
 
@@ -111,6 +112,11 @@ class BreakdownServiceTestCase(ApiDBTestCase):
     def new_scene_instance(self, asset_id):
         return breakdown_service.add_asset_instance_to_scene(
             self.scene_id, asset_id
+        )
+
+    def new_episode_instance(self, asset_id):
+        return breakdown_service.add_asset_instance_to_episode(
+            self.episode_id, asset_id
         )
 
     def test_update_casting(self):
@@ -244,3 +250,36 @@ class BreakdownServiceTestCase(ApiDBTestCase):
             self.asset.id
         )
         self.assertEqual(len(instances[self.scene_id]), 2)
+
+    def test_add_instance_to_episode(self):
+        instances = breakdown_service.get_asset_instances_for_episode(
+            self.episode.id
+        )
+        self.assertEqual(instances, {})
+
+        self.new_episode_instance(self.asset_id)
+        self.new_episode_instance(self.asset_id)
+        self.new_episode_instance(self.asset_character_id)
+
+        instances = breakdown_service.get_asset_instances_for_episode(
+            self.episode.id
+        )
+        self.assertEqual(len(instances[self.asset_id]), 2)
+        self.assertEqual(len(instances[self.asset_character_id]), 1)
+        self.assertEqual(instances[self.asset_id][0]["number"], 1)
+        self.assertEqual(instances[self.asset_id][1]["number"], 2)
+        self.assertEqual(instances[self.asset_character_id][0]["number"], 1)
+
+    def test_get_episode_asset_instances_for_asset(self):
+        instances = breakdown_service.get_episode_asset_instances_for_asset(
+            self.asset.id
+        )
+        self.assertEqual(instances, {})
+
+        self.new_episode_instance(self.asset.id)
+        self.new_episode_instance(self.asset.id)
+        self.new_episode_instance(self.asset_character.id)
+        instances = breakdown_service.get_episode_asset_instances_for_asset(
+            self.asset.id
+        )
+        self.assertEqual(len(instances[self.episode_id]), 2)
