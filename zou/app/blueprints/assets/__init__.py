@@ -10,6 +10,7 @@ from .resources import (
     AssetCastInResource,
     AssetShotAssetInstancesResource,
     AssetSceneAssetInstancesResource,
+    AssetEpisodeAssetInstancesResource,
     AssetTypeResource,
     AssetTypesResource,
     AssetTasksResource,
@@ -43,6 +44,10 @@ routes = [
     (
         "/data/assets/<asset_id>/scene-asset-instances",
         AssetSceneAssetInstancesResource,
+    ),
+    (
+        "/data/assets/<asset_id>/episode-asset-instances",
+        AssetEpisodeAssetInstancesResource,
     ),
     (
         "/data/assets/<asset_id>/asset-asset-instances",

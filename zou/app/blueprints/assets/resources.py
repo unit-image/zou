@@ -299,3 +299,14 @@ class AssetAssetInstancesResource(Resource, ArgsMixin):
             asset_id, args["asset_to_instantiate_id"], args["description"]
         )
         return asset_instance, 201
+
+
+class AssetEpisodeAssetInstancesResource(Resource):
+    @jwt_required
+    def get(self, asset_id):
+        """
+        Retrieve all episode asset instances linked to given asset.
+        """
+        asset = assets_service.get_asset(asset_id)
+        user_service.check_project_access(asset["project_id"])
+        return breakdown_service.get_episode_asset_instances_for_asset(asset_id)

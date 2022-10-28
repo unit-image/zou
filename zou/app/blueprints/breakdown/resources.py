@@ -137,7 +137,7 @@ class EpisodeAssetInstancesResource(Resource, ArgsMixin):
     @jwt_required
     def get(self, episode_id):
         """
-        Retrieve all asset instances linked to episode.
+        Retrieve all asset instances linked to given episode.
         """
         episode = shots_service.get_episode(episode_id)
         user_service.check_project_access(episode["project_id"])
