@@ -10,6 +10,11 @@ from zou.app.utils import fields, events
 
 from zou.app.services import assets_service, entities_service, shots_service
 
+from zou.app.services.exception import (
+    SceneNotFoundException,
+    ShotNotFoundException,
+)
+
 """
 Breakdown can be represented in two ways:
 
@@ -284,6 +289,10 @@ def get_asset_instances_for_scene(scene_id, asset_type_id=None):
     result = {}
     for asset_instance in asset_instances:
         asset_id = str(asset_instance.asset_id)
+        if asset_type_id:
+            asset = assets_service.get_asset_raw(asset_id)
+            if str(asset.entity_type_id) != asset_type_id:
+                continue
         if asset_id not in result:
             result[asset_id] = []
         result[asset_id].append(asset_instance.serialize())
@@ -327,7 +336,11 @@ def get_shot_asset_instances_for_asset(asset_id):
 
     result = {}
     for asset_instance in asset_instances:
-        for shot in asset_instance.shots:
+        for workspace in asset_instance.workspaces:
+            try:
+                shot = shots_service.get_shot_raw(workspace.id)
+            except ShotNotFoundException:
+                continue
             shot_id = str(shot.id)
             if shot_id not in result:
                 result[shot_id] = []
@@ -348,10 +361,15 @@ def get_scene_asset_instances_for_asset(asset_id):
 
     result = {}
     for asset_instance in asset_instances:
-        scene_id = str(asset_instance.scene_id)
-        if scene_id not in result:
-            result[scene_id] = []
-        result[scene_id].append(asset_instance.serialize())
+        for workspace in asset_instance.workspaces:
+            try:
+                scene = shots_service.get_scene_raw(workspace.id)
+            except SceneNotFoundException:
+                continue
+            scene_id = str(scene.id)
+            if scene_id not in result:
+                result[scene_id] = []
+            result[scene_id].append(asset_instance.serialize())
 
     return result
 
@@ -364,39 +382,23 @@ def get_camera_instances_for_scene(scene_id):
     return get_asset_instances_for_scene(scene_id, camera_entity_type["id"])
 
 
-def add_asset_instance_to_scene(scene_id, asset_id, description=""):
+def add_asset_instance_to_scene(scene_id, asset_instance_id):
     """
     Create a new asset instance for given asset and scene.
     """
-    instance = (
-        AssetInstance.query.filter(AssetInstance.scene_id == scene_id)
-        .filter(AssetInstance.asset_id == asset_id)
-        .order_by(desc(AssetInstance.number))
-        .first()
-    )
-
-    number = 1
-    if instance is not None:
-        number = instance.number + 1
-    name = build_asset_instance_name(asset_id, number)
-
-    asset_instance = AssetInstance.create(
-        asset_id=asset_id,
-        scene_id=scene_id,
-        number=number,
-        name=name,
-        description=description,
-    ).serialize()
+    """
+    Add asset instance to instance casting of given scene.
+    """
+    scene = shots_service.get_scene_raw(scene_id)
+    asset_instance = assets_service.get_asset_instance_raw(asset_instance_id)
+    scene.instance_casting.append(asset_instance)
+    scene.save()
 
     events.emit(
-        "asset_instance:new",
-        {
-            "scene_id": scene_id,
-            "asset_id": asset_id,
-            "asset_instance_id": asset_instance["id"],
-        }
+        "asset_instance:add-to-scene",
+        {"scene_id": scene_id, "asset_instance_id": asset_instance_id},
     )
-    return asset_instance
+    return scene.serialize()
 
 
 def add_asset_instance_to_shot(shot_id, asset_instance_id):

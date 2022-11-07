@@ -14,6 +14,7 @@ class FolderPathTestCase(ApiDBTestCase):
         self.generate_fixture_assigner()
         self.generate_fixture_asset_type()
         self.generate_fixture_asset()
+        self.generate_fixture_episode()
         self.generate_fixture_sequence()
         self.generate_fixture_shot()
         self.generate_fixture_scene()
@@ -111,7 +112,7 @@ class FolderPathTestCase(ApiDBTestCase):
 
     def test_get_path_shot_asset_instance(self):
         self.output_type = files_service.get_or_create_output_type("Cache")
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         self.generate_fixture_shot_asset_instance(
             self.shot,
             self.asset_instance
@@ -144,7 +145,7 @@ class FolderPathTestCase(ApiDBTestCase):
 
     def test_get_path_scene_asset_instance(self):
         self.output_type = files_service.get_or_create_output_type("Cache")
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         data = {
             "name": "main",
             "temporal_entity_id": self.scene.id,

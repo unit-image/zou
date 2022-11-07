@@ -23,6 +23,7 @@ class FileServiceTestCase(ApiDBTestCase):
         self.generate_fixture_project()
         self.generate_fixture_asset_type()
         self.generate_fixture_asset()
+        self.generate_fixture_episode()
         self.generate_fixture_sequence()
         self.generate_fixture_shot()
         self.generate_fixture_department()
@@ -269,7 +270,7 @@ class FileServiceTestCase(ApiDBTestCase):
         self.generate_fixture_asset()
         self.generate_fixture_scene()
         scene_id = str(self.scene.id)
-        asset_instance = self.generate_fixture_scene_asset_instance()
+        asset_instance = self.generate_fixture_episode_asset_instance()
         geometry = self.output_type
         self.generate_fixture_output_file(
             geometry, 1, representation="obj", asset_instance=asset_instance,
@@ -333,7 +334,7 @@ class FileServiceTestCase(ApiDBTestCase):
 
         scene_id = str(self.scene.id)
         shot_id = str(self.shot.id)
-        asset_instance = self.generate_fixture_scene_asset_instance()
+        asset_instance = self.generate_fixture_episode_asset_instance()
         self.generate_fixture_shot_asset_instance(
             self.shot,
             self.asset_instance

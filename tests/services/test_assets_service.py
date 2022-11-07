@@ -13,6 +13,7 @@ class AssetServiceTestCase(ApiDBTestCase):
         self.generate_fixture_project()
         self.generate_fixture_asset_type()
         self.generate_fixture_asset()
+        self.generate_fixture_episode()
         self.generate_fixture_sequence()
         self.generate_fixture_shot()
 
@@ -100,7 +101,7 @@ class AssetServiceTestCase(ApiDBTestCase):
 
     def test_get_asset_instance(self):
         self.generate_fixture_scene()
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         self.generate_fixture_shot_asset_instance(
             self.shot,
             self.asset_instance

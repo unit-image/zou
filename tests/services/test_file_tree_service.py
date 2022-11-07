@@ -356,7 +356,7 @@ class FileTreeTestCase(ApiDBTestCase):
         )
 
     def test_get_folder_path_shot_asset_instance(self):
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         self.generate_fixture_shot_asset_instance(
             self.shot,
             self.asset_instance
@@ -375,7 +375,7 @@ class FileTreeTestCase(ApiDBTestCase):
         )
 
     def test_get_file_name_shot_asset_instance(self):
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         self.generate_fixture_shot_asset_instance(
             self.shot,
             self.asset_instance
@@ -395,7 +395,7 @@ class FileTreeTestCase(ApiDBTestCase):
         )
 
     def test_get_folder_path_scene_asset_instance(self):
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         path = file_tree_service.get_instance_folder_path(
             self.asset_instance.serialize(),
             self.scene.serialize(),
@@ -410,7 +410,7 @@ class FileTreeTestCase(ApiDBTestCase):
         )
 
     def test_get_file_name_scene_asset_instance(self):
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         file_name = file_tree_service.get_instance_file_name(
             self.asset_instance.serialize(),
             self.scene.serialize(),
@@ -463,7 +463,7 @@ class FileTreeTestCase(ApiDBTestCase):
         )
 
     def test_get_folder_path_representation(self):
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         path = file_tree_service.get_instance_folder_path(
             self.asset_instance.serialize(),
             self.scene.serialize(),

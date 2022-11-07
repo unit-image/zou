@@ -444,19 +444,19 @@ class ApiDBTestCase(ApiTestCase):
         self.shot.save()
         return self.shot
 
-    def generate_fixture_scene_asset_instance(
+    def generate_fixture_episode_asset_instance(
         self,
         asset=None,
-        scene=None,
+        episode=None,
         number=1
     ):
         if asset is None:
             asset = self.asset
-        if scene is None:
-            scene = self.scene
+        if episode is None:
+            episode = self.episode
         self.asset_instance = AssetInstance.create(
             asset_id=asset.id,
-            scene_id=scene.id,
+            episode_id=episode.id,
             number=number,
             name=breakdown_service.build_asset_instance_name(
                 self.asset.id, number

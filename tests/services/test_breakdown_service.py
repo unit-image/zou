@@ -168,11 +168,11 @@ class BreakdownServiceTestCase(ApiDBTestCase):
         instances = breakdown_service.get_asset_instances_for_shot(self.shot.id)
         self.assertEqual(instances, {})
 
-        asset_instance = self.new_scene_instance(self.asset_id)
+        asset_instance = self.new_episode_instance(self.asset_id)
         self.new_shot_instance(asset_instance["id"])
-        asset_instance = self.new_scene_instance(self.asset_id)
+        asset_instance = self.new_episode_instance(self.asset_id)
         self.new_shot_instance(asset_instance["id"])
-        asset_instance = self.new_scene_instance(self.asset_character_id)
+        asset_instance = self.new_episode_instance(self.asset_character_id)
         self.new_shot_instance(asset_instance["id"])
 
         instances = breakdown_service.get_asset_instances_for_shot(self.shot.id)
@@ -206,11 +206,11 @@ class BreakdownServiceTestCase(ApiDBTestCase):
         )
         self.assertEqual(instances, {})
 
-        asset_instance = self.new_scene_instance(self.asset_id)
+        asset_instance = self.new_episode_instance(self.asset_id)
         self.new_shot_instance(asset_instance["id"])
-        asset_instance = self.new_scene_instance(self.asset_id)
+        asset_instance = self.new_episode_instance(self.asset_id)
         self.new_shot_instance(asset_instance["id"])
-        asset_instance = self.new_scene_instance(self.asset_character_id)
+        asset_instance = self.new_episode_instance(self.asset_character_id)
         self.new_shot_instance(asset_instance["id"])
 
         instances = breakdown_service.get_shot_asset_instances_for_asset(
@@ -219,23 +219,32 @@ class BreakdownServiceTestCase(ApiDBTestCase):
         self.assertEqual(len(instances[self.shot_id]), 2)
 
     def test_add_instance_to_scene(self):
-        instances = breakdown_service.get_asset_instances_for_scene(
-            self.scene.id
-        )
+        instances = breakdown_service.get_asset_instances_for_scene(self.scene.id)
         self.assertEqual(instances, {})
 
-        self.new_scene_instance(self.asset_id)
-        self.new_scene_instance(self.asset_id)
-        self.new_scene_instance(self.asset_character_id)
+        asset_instance = self.new_episode_instance(self.asset_id)
+        self.new_scene_instance(asset_instance["id"])
+        asset_instance = self.new_episode_instance(self.asset_id)
+        self.new_scene_instance(asset_instance["id"])
+        asset_instance = self.new_episode_instance(self.asset_character_id)
+        self.new_scene_instance(asset_instance["id"])
 
-        instances = breakdown_service.get_asset_instances_for_scene(
-            self.scene.id
-        )
+        instances = breakdown_service.get_asset_instances_for_scene(self.scene.id)
         self.assertEqual(len(instances[self.asset_id]), 2)
         self.assertEqual(len(instances[self.asset_character_id]), 1)
         self.assertEqual(instances[self.asset_id][0]["number"], 1)
         self.assertEqual(instances[self.asset_id][1]["number"], 2)
+        self.assertEqual(
+            instances[self.asset_id][1]["name"],
+            "Tree_0002"
+        )
         self.assertEqual(instances[self.asset_character_id][0]["number"], 1)
+
+        instances = breakdown_service.remove_asset_instance_for_scene(
+            self.scene.id, asset_instance["id"]
+        )
+        instances = breakdown_service.get_asset_instances_for_scene(self.scene.id)
+        self.assertTrue(self.asset_character_id not in instances)
 
     def test_get_scene_asset_instances_for_asset(self):
         instances = breakdown_service.get_scene_asset_instances_for_asset(
@@ -243,9 +252,12 @@ class BreakdownServiceTestCase(ApiDBTestCase):
         )
         self.assertEqual(instances, {})
 
-        self.new_scene_instance(self.asset.id)
-        self.new_scene_instance(self.asset.id)
-        self.new_scene_instance(self.asset_character.id)
+        asset_instance = self.new_episode_instance(self.asset_id)
+        self.new_scene_instance(asset_instance["id"])
+        asset_instance = self.new_episode_instance(self.asset_id)
+        self.new_scene_instance(asset_instance["id"])
+        asset_instance = self.new_episode_instance(self.asset_character_id)
+        self.new_scene_instance(asset_instance["id"])
         instances = breakdown_service.get_scene_asset_instances_for_asset(
             self.asset.id
         )
@@ -283,3 +295,17 @@ class BreakdownServiceTestCase(ApiDBTestCase):
             self.asset.id
         )
         self.assertEqual(len(instances[self.episode_id]), 2)
+
+    def test_remove_asset_instance_for_scene(self):
+        instances = breakdown_service.get_asset_instances_for_scene(self.scene.id)
+        self.assertEqual(instances, {})
+
+        asset_instance = self.new_episode_instance(self.asset_id)
+        breakdown_service.add_asset_instance_to_scene(
+            self.scene_id, asset_instance['id'])
+        instances = breakdown_service.get_asset_instances_for_scene(self.scene.id)
+        self.assertEqual(len(instances), 1)
+
+        breakdown_service.remove_asset_instance_for_scene(self.scene.id, asset_instance["id"])
+        instances = breakdown_service.get_asset_instances_for_scene(self.scene.id)
+        self.assertEqual(instances, {})

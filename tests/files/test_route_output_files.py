@@ -14,6 +14,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
         self.generate_fixture_project()
         self.generate_fixture_asset_type()
         self.generate_fixture_asset()
+        self.generate_fixture_episode()
         self.generate_fixture_sequence()
         self.generate_fixture_shot()
         self.generate_fixture_department()
@@ -379,7 +380,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
 
     def test_new_instance_output(self):
         self.generate_fixture_scene()
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         self.generate_fixture_shot_asset_instance(
             self.shot,
             self.asset_instance
@@ -426,7 +427,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
 
     def test_get_next_instance_revision(self):
         self.generate_fixture_scene()
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         self.generate_fixture_shot_asset_instance(
             self.shot,
             self.asset_instance
@@ -467,7 +468,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
 
     def test_get_last_instance_outputs(self):
         self.generate_fixture_scene()
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         self.generate_fixture_shot_asset_instance(
             self.shot,
             self.asset_instance
@@ -621,7 +622,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
 
     def test_get_output_types(self):
         self.generate_fixture_scene()
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         self.generate_fixture_shot_asset_instance(
             self.shot,
             self.asset_instance
@@ -691,7 +692,7 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
 
     def test_get_output_files_for_output_type_and_asset_instance(self):
         self.generate_fixture_scene()
-        self.generate_fixture_scene_asset_instance()
+        self.generate_fixture_episode_asset_instance()
         self.generate_fixture_shot_asset_instance(
             self.shot,
             self.asset_instance
