@@ -109,17 +109,15 @@ class SceneAssetInstancesResource(Resource, ArgsMixin):
     @jwt_required
     def post(self, scene_id):
         """
-        Create an asset instance on given scene.
+        Add an asset instance to given scene.
         """
-        args = self.get_args(
-            [("asset_id", None, True), ("description", None, False)]
-        )
+        args = self.get_args([("asset_instance_id", None, True)])
         scene = shots_service.get_scene(scene_id)
         user_service.check_project_access(scene["project_id"])
-        asset_instance = breakdown_service.add_asset_instance_to_scene(
-            scene_id, args["asset_id"], args["description"]
+        scene = breakdown_service.add_asset_instance_to_scene(
+            scene_id, args["asset_instance_id"]
         )
-        return asset_instance, 201
+        return scene, 201
 
 
 class SceneCameraInstancesResource(Resource):
