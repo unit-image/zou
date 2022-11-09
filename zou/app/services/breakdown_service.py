@@ -270,24 +270,12 @@ def get_cast_in(asset_id):
 
 def get_asset_instances_for_scene(scene_id, asset_type_id=None):
     """
-    Return all asset instances for given scene.
-
-    Asset instances are a different way to represent the casting of a shot.
-    They allow to track precisely output files generated when building a shot.
+    Return asset instances casted in given scene.
     """
-    query = AssetInstance.query.filter(
-        AssetInstance.scene_id == scene_id
-    ).order_by(AssetInstance.asset_id, AssetInstance.number)
-
-    if asset_type_id is not None:
-        query = query.join(Entity, AssetInstance.asset_id == Entity.id).filter(
-            Entity.entity_type_id == asset_type_id
-        )
-
-    asset_instances = query.all()
+    scene = shots_service.get_scene_raw(scene_id)
 
     result = {}
-    for asset_instance in asset_instances:
+    for asset_instance in scene.instance_casting:
         asset_id = str(asset_instance.asset_id)
         if asset_type_id:
             asset = assets_service.get_asset_raw(asset_id)
