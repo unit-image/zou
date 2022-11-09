@@ -420,6 +420,21 @@ def remove_asset_instance_for_shot(shot_id, asset_instance_id):
     return shot.serialize()
 
 
+def remove_asset_instance_for_scene(scene_id, asset_instance_id):
+    """
+    Remove asset instance from instance casting of given scene.
+    """
+    scene = shots_service.get_scene_raw(scene_id)
+    asset_instance = assets_service.get_asset_instance_raw(asset_instance_id)
+    scene.instance_casting.remove(asset_instance)
+    scene.save()
+    events.emit(
+        "asset_instance:remove-from-scene",
+        {"scene_id": scene_id, "asset_instance_id": asset_instance_id},
+    )
+    return scene.serialize()
+
+
 def add_asset_instance_to_episode(episode_id, asset_id, description=""):
     """
     Create a new asset instance for given asset and episode.
