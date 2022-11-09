@@ -6,6 +6,7 @@ from .resources import (
     ProjectEntityLinksResource,
     ShotAssetInstancesResource,
     RemoveShotAssetInstanceResource,
+    RemoveSceneAssetInstanceResource,
     SceneAssetInstancesResource,
     EpisodeAssetInstancesResource,
     SceneCameraInstancesResource,
@@ -36,6 +37,10 @@ routes = [
     (
         "/data/shots/<shot_id>/asset-instances/<asset_instance_id>",
         RemoveShotAssetInstanceResource,
+    ),
+    (
+        "/data/scenes/<scene_id>/asset-instances/<asset_instance_id>",
+        RemoveSceneAssetInstanceResource,
     ),
     ("/data/episodes/<episode_id>/asset-instances", EpisodeAssetInstancesResource),
 ]

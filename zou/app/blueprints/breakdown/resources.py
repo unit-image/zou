@@ -96,6 +96,20 @@ class RemoveShotAssetInstanceResource(Resource, ArgsMixin):
         return "", 204
 
 
+class RemoveSceneAssetInstanceResource(Resource, ArgsMixin):
+    @jwt_required
+    def delete(self, scene_id, asset_instance_id):
+        """
+        Remove an asset instance from given scene.
+        """
+        scene = shots_service.get_scene(scene_id)
+        user_service.check_project_access(scene["project_id"])
+        scene = breakdown_service.remove_asset_instance_for_scene(
+            scene_id, asset_instance_id
+        )
+        return "", 204
+
+
 class SceneAssetInstancesResource(Resource, ArgsMixin):
     @jwt_required
     def get(self, scene_id):
