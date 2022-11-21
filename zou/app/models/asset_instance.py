@@ -27,9 +27,6 @@ class AssetInstance(db.Model, BaseMixin, SerializerMixin):
     active = db.Column(db.Boolean(), default=True)
     data = db.Column(JSONB)
 
-    scene_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("entity.id"), index=True
-    )
     target_asset_id = db.Column(
         UUIDType(binary=False), db.ForeignKey("entity.id"), index=True
     )
@@ -53,6 +50,9 @@ class AssetInstance(db.Model, BaseMixin, SerializerMixin):
     entity_id = db.Column(UUIDType(binary=False), db.ForeignKey("entity.id"))
     entity_type_id = db.Column(
         UUIDType(binary=False), db.ForeignKey("entity_type.id")
+    )
+    scene_id = db.Column(
+        UUIDType(binary=False), db.ForeignKey("entity.id"), index=True
     )
 
     def __repr__(self):
