@@ -8,11 +8,6 @@ RUN apt-get update && apt-get install postgresql-client --yes && apt-get install
 # Install external dependencies
 # We do it separatly to leverage docker build cache
 WORKDIR /opt/zou
-COPY setup.py setup.cfg ./
-COPY zou/__init__.py ./zou/
-RUN python -c "import distutils.core; setup = distutils.core.run_setup('setup.py'); print('\n'.join(setup.install_requires))" > image-requirements.txt
-RUN pip install -r image-requirements.txt
-RUN pip install greenlet==0.4.16
 
 # Install zou
 COPY . .
