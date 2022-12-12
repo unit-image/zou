@@ -8,6 +8,22 @@ from zou.app.models.base import BaseMixin
 from sqlalchemy.dialects.postgresql import JSONB
 
 
+class OutputFileStream(db.Model, BaseMixin, SerializerMixin):
+    __tablename__ = "output_file_stream"
+    output_file_id = db.Column(
+        UUIDType(binary=False),
+        db.ForeignKey("output_file.id"),
+        primary_key=True,
+        index=True
+    )
+    upstream_output_file_id = db.Column(
+        UUIDType(binary=False),
+        db.ForeignKey("output_file.id"),
+        primary_key=True,
+        index=True
+    )
+
+
 class OutputFile(db.Model, BaseMixin, SerializerMixin):
     """
     Describe a file generated from a CG artist scene. It's the result of a
@@ -54,6 +70,14 @@ class OutputFile(db.Model, BaseMixin, SerializerMixin):
         db.ForeignKey("entity.id"),
         default=None,
         nullable=True,
+    )
+
+    upstreams = db.relationship(
+        "OutputFile",
+        secondary="output_file_stream",
+        primaryjoin="OutputFile.id == OutputFileStream.output_file_id",
+        secondaryjoin="OutputFile.id == OutputFileStream.upstream_output_file_id",
+        backref="downstreams",
     )
 
     __table_args__ = (
