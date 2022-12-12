@@ -65,6 +65,10 @@ class OutputFileNotFoundException(NotFound):
     pass
 
 
+class OutputFileStreamNotFoundException(NotFound):
+    pass
+
+
 class SoftwareNotFoundException(NotFound):
     pass
 

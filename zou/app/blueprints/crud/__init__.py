@@ -21,6 +21,7 @@ from .milestone import MilestonesResource, MilestoneResource
 from .notification import NotificationsResource, NotificationResource
 from .organisation import OrganisationsResource, OrganisationResource
 from .output_file import OutputFilesResource, OutputFileResource
+from .output_file_stream import OutputFileStreamsResource, OutputFileStreamResource
 from .output_type import OutputTypeResource, OutputTypesResource
 from .news import NewssResource, NewsResource
 from .person import PersonResource, PersonsResource
@@ -108,6 +109,8 @@ routes = [
     ("/data/entity-links/<instance_id>", EntityLinkResource),
     ("/data/work-location/<instance_id>", WorkLocationResource),
     ("/data/work-locations", WorkLocationsResource),
+    ("/data/output-file-links/", OutputFileStreamsResource),
+    ("/data/output-file-links/<instance_id>", OutputFileStreamResource),
 ]
 
 blueprint = Blueprint("/data", "data")
