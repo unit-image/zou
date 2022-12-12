@@ -233,7 +233,8 @@ def create_new_output_revision(
     nb_elements=1,
     asset_instance_id=None,
     temporal_entity_id=None,
-    file_status_id=None
+    file_status_id=None,
+    upstreams=[]
 ):
     """
     Create a new ouput file for given entity. Output type, task type, author
@@ -295,6 +296,7 @@ def create_new_output_revision(
                 task_type_id=task_type_id,
                 nb_elements=nb_elements,
                 temporal_entity_id=temporal_entity_id,
+                upstreams=upstreams,
             )
             entity = entities_service.get_entity(entity_id)
             events.emit(

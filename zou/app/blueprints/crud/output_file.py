@@ -2,7 +2,7 @@ from zou.app.models.output_file import OutputFile
 from zou.app.models.entity import Entity
 from zou.app.models.project import Project
 from zou.app.services import user_service, entities_service
-from zou.app.utils import permissions
+from zou.app.utils import permissions, events
 
 from .base import BaseModelsResource, BaseModelResource
 
@@ -30,6 +30,7 @@ class OutputFilesResource(BaseModelsResource):
 class OutputFileResource(BaseModelResource):
     def __init__(self):
         BaseModelResource.__init__(self, OutputFile)
+        self.upstreams_change = False
 
     def check_read_permissions(self, instance):
         entity = entities_service.get_entity(instance["entity_id"])
@@ -45,3 +46,29 @@ class OutputFileResource(BaseModelResource):
             return user_service.check_working_on_entity(
                 output_file["temporal_entity_id"] or output_file["entity_id"]
             )
+
+    def pre_update(self, instance_dict, data):
+        self.upstreams_change = False
+
+        current_upstreams = list(set(instance_dict.get("upstreams", [])))
+        new_upstreams = list(set(data.get("upstreams", [])))
+
+        if current_upstreams != new_upstreams:
+            self.upstreams_change = True
+
+    def update_data(self, data, instance_id):
+        if "downstreams" in data:
+            data.pop("downstreams", None)
+
+        # Replace upstream's id by corresponding OutputFile instance
+        upstreams = data.get("upstreams", None)
+        if upstreams is not None:
+            data["upstreams"] = [OutputFile.get_by(id=upstream) for upstream in upstreams]
+        return data
+
+    def post_update(self, instance_dict):
+        if self.upstreams_change:
+            events.emit("output-file:upstreams-updated", {
+                "output_file_id": instance_dict["id"],
+                "upstreams": instance_dict.get("upstreams", [])
+            })
