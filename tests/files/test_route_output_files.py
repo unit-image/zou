@@ -742,3 +742,38 @@ class RouteOutputFilesTestCase(ApiDBTestCase):
                 self.asset_instance.id, self.scene.id, geometry.id
             ))
         self.assertEqual(len(output_files), 3)
+
+    def test_output_file_upstreams(self):
+        """
+        Test addition and deletion of an upstream to an output file.
+        """
+        self.generate_fixture_output_type()
+        output_file_1 = self.generate_fixture_output_file()
+        output_file_2 = self.generate_fixture_output_file()
+
+        output_file_1_id = str(output_file_1.id)
+        output_file_2_id = str(output_file_2.id)
+
+        # Add upstream to output file
+        self.put(
+            "/data/output-files/{}".format(output_file_2_id),
+            {"upstreams": [output_file_1_id]},
+            200)
+
+        output_file_1 = self.get("/data/output-files/{}".format(output_file_1_id))
+        output_file_2 = self.get("/data/output-files/{}".format(output_file_2_id))
+
+        self.assertEqual(output_file_1["downstreams"], [output_file_2_id])
+        self.assertEqual(output_file_2["upstreams"], [output_file_1_id])
+
+        # Remove upstream
+        self.put(
+            "/data/output-files/{}".format(output_file_2_id),
+            {"upstreams": []},
+            200)
+
+        output_file_2 = self.get("/data/output-files/{}".format(output_file_2_id))
+        output_file_1 = self.get("/data/output-files/{}".format(output_file_1_id))
+
+        self.assertEqual(output_file_2["upstreams"], [])
+        self.assertEqual(output_file_1["downstreams"], [])
