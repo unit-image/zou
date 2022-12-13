@@ -506,7 +506,7 @@ def get_last_output_files_for_entity(
     output_type_id=None,
     name=None,
     representation=None,
-    file_status_id=None,
+    file_statuses_id=None,
 ):
     """
     Get last output files for given parameters.
@@ -519,7 +519,7 @@ def get_last_output_files_for_entity(
     # lead to different groups of files sharing the same history but with
     # different status.
     # This could be very misleading when the user would want to get the last.
-    if file_status_id:
+    if file_statuses_id:
         query = OutputFile.query.with_entities(
             OutputFile.task_type_id,
             OutputFile.output_type_id,
@@ -550,8 +550,8 @@ def get_last_output_files_for_entity(
 
     query = query.filter(OutputFile.entity_id == entity_id)
     query = query.filter(OutputFile.asset_instance_id == None)
-    if file_status_id:
-        query = query.filter(OutputFile.file_status_id.in_(file_status_id))
+    if file_statuses_id:
+        query = query.filter(OutputFile.file_status_id.in_(file_statuses_id))
     if task_type_id:
         query = query.filter(OutputFile.task_type_id == task_type_id)
     if output_type_id:
@@ -589,7 +589,7 @@ def get_last_output_files_for_instance(
     output_type_id=None,
     name=None,
     representation=None,
-    file_status_id=None,
+    file_statuses_id=None,
 ):
     """
     Get last output files for given entity grouped by output type and name.
@@ -599,7 +599,7 @@ def get_last_output_files_for_instance(
     # lead to different groups of files sharing the same history but with
     # different status.
     # This could be very misleading when the user would want to get the last.
-    if file_status_id:
+    if file_statuses_id:
         query = OutputFile.query.with_entities(
             OutputFile.asset_instance_id,
             OutputFile.temporal_entity_id,
@@ -637,8 +637,8 @@ def get_last_output_files_for_instance(
         )
     query = query.filter(OutputFile.asset_instance_id == asset_instance_id)
     query = query.filter(OutputFile.temporal_entity_id == temporal_entity_id)
-    if file_status_id:
-        query = query.filter(OutputFile.file_status_id.in_(file_status_id))
+    if file_statuses_id:
+        query = query.filter(OutputFile.file_status_id.in_(file_statuses_id))
     if task_type_id:
         query = query.filter(OutputFile.task_type_id == task_type_id)
     if output_type_id:
