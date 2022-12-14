@@ -29,7 +29,9 @@ class OutputFileTestCase(ApiDBTestCase):
             task_id=self.task.id,
             entity_id=self.asset.id,
             person_id=self.person.id,
-            file_status_id=self.file_status.id
+            file_status_id=self.file_status.id,
+            upstreams=[],
+            downstreams=[],
         )
 
     def test_get_output_files(self):
@@ -37,7 +39,7 @@ class OutputFileTestCase(ApiDBTestCase):
         self.assertEqual(len(output_files), 3)
 
     def test_get_output_file(self):
-        output_file = self.get_first("data/output-files")
+        output_file = self.get_first("data/output-files?relations=true")
         output_file_again = self.get(
             "data/output-files/%s" % output_file["id"])
         self.assertEqual(output_file, output_file_again)
@@ -51,7 +53,9 @@ class OutputFileTestCase(ApiDBTestCase):
             "size": 1024,
             "person_id": self.person.id,
             "file_status_id": self.file_status.id,
-            "representation": "none"
+            "representation": "none",
+            "upstreams": [],
+            "downstreams": [],
         }
         self.file_status_id = self.file_status.id
         self.output_file = self.post("data/output-files", data)
