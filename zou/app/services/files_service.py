@@ -434,7 +434,7 @@ def get_output_files_for_entity(
     output_type_id=None,
     name=None,
     representation=None,
-    file_status_id=None,
+    file_statuses_id=None,
 ):
     """
     Return output files for given entity ordered by revision.
@@ -449,8 +449,8 @@ def get_output_files_for_entity(
         query = query.filter(OutputFile.name == name)
     if representation:
         query = query.filter(OutputFile.representation == representation)
-    if file_status_id:
-        query = query.filter(OutputFile.file_status_id == file_status_id)
+    if file_statuses_id:
+        query = query.filter(OutputFile.file_status_id.in_(file_statuses_id))
 
     query = query.filter(OutputFile.asset_instance_id == None)
     query = query.filter(OutputFile.temporal_entity_id == None)
@@ -470,7 +470,7 @@ def get_output_files_for_instance(
     output_type_id=None,
     name=None,
     representation=None,
-    file_status_id=None,
+    file_statuses_id=None,
 ):
     """
     Return output files for given instance ordered by revision.
@@ -489,8 +489,8 @@ def get_output_files_for_instance(
         query = query.filter(OutputFile.name == name)
     if representation:
         query = query.filter(OutputFile.representation == representation)
-    if file_status_id:
-        query = query.filter(OutputFile.file_status_id == file_status_id)
+    if file_statuses_id:
+        query = query.filter(OutputFile.file_status_id.in_(file_statuses_id))
 
     output_files = (
         query.filter(OutputFile.revision >= 0)

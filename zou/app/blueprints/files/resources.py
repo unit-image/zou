@@ -1033,7 +1033,7 @@ class EntityOutputFilesResource(Resource):
         output_type_id = request.args.get("output_type_id")
         name = request.args.get("name")
         representation = request.args.get("representation")
-        file_status_id = request.args.get("file_status_id")
+        file_statuses_id = request.args.getlist("file_statuses_id")
 
         return files_service.get_output_files_for_entity(
             entity["id"],
@@ -1041,7 +1041,7 @@ class EntityOutputFilesResource(Resource):
             output_type_id=output_type_id,
             name=name,
             representation=representation,
-            file_status_id=file_status_id,
+            file_statuses_id=file_statuses_id,
         )
 
 
@@ -1061,7 +1061,7 @@ class InstanceOutputFilesResource(Resource):
         output_type_id = request.args.get("output_type_id")
         name = request.args.get("name")
         representation = request.args.get("representation")
-        file_status_id = request.args.get("file_status_id")
+        file_statuses_id = request.args.getlist("file_statuses_id")
 
         return files_service.get_output_files_for_instance(
             asset_instance["id"],
@@ -1070,7 +1070,7 @@ class InstanceOutputFilesResource(Resource):
             output_type_id=output_type_id,
             name=name,
             representation=representation,
-            file_status_id=file_status_id,
+            file_statuses_id=file_statuses_id,
         )
 
 
