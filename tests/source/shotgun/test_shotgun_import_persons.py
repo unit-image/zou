@@ -30,7 +30,8 @@ class ImportShotgunPersonTestCase(ShotgunTestCase):
             "login": "jamie",
             "id": 3,
             "sg_status_list": "dis",
-            "type": "HumanUser"
+            "type": "HumanUser",
+            "role": "user",
         }
 
         api_path = "/import/shotgun/persons"
@@ -57,7 +58,7 @@ class ImportShotgunPersonTestCase(ShotgunTestCase):
             "id": 3,
             "sg_status_list": "dis",
             "type": "HumanUser",
-            "permission_rule_set": {"name": "Admin"}
+            "role": "admin",
         }
 
         api_path = "/import/shotgun/persons"
