@@ -18,14 +18,6 @@ class ImportShotgunPersonsResource(BaseImportShotgunResource):
 
     def extract_data(self, sg_person):
         is_active = sg_person.get("sg_status_list", "act") == "act"
-        role = "user"
-
-        rule_set = sg_person.get("permission_rule_set", {})
-        permission_group = rule_set.get("name", "")
-        if permission_group == "Manager":
-            role = "manager"
-        elif permission_group == "Admin":
-            role = "admin"
 
         if sg_person.get('department', None) is not None:
             department = tasks_service.get_or_create_department(
@@ -41,7 +33,7 @@ class ImportShotgunPersonsResource(BaseImportShotgunResource):
             "shotgun_id": sg_person["id"],
             "desktop_login": sg_person["login"],
             "active": is_active,
-            "role": role,
+            "role": sg_person["role"],
             "department": department,
         }
 
