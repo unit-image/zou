@@ -860,7 +860,7 @@ def get_data_from_token(name, value, constraints=None):
         # An asset depends on a project and an asset type
         if (not constraints.get(PathTokens.PROJECT)
                 or not constraints.get(PathTokens.ASSET_TYPE)):
-            return
+            return None
 
         data = Entity.get_by_case_insensitive(
             name=value,
@@ -877,7 +877,7 @@ def get_data_from_token(name, value, constraints=None):
     elif name == PathTokens.EPISODE:
         # An episode depends on a project
         if not constraints.get(PathTokens.PROJECT):
-            return
+            return None
 
         data = Entity.get_by_case_insensitive(
             name=value,
@@ -889,7 +889,7 @@ def get_data_from_token(name, value, constraints=None):
         # A sequence depends on a project and an episode
         if (not constraints.get(PathTokens.PROJECT)
                 or not constraints.get(PathTokens.EPISODE)):
-            return
+            return None
 
         data = Entity.get_by_case_insensitive(
             name=value,
@@ -905,7 +905,7 @@ def get_data_from_token(name, value, constraints=None):
         # A shot depends on a project and a sequence
         if (not constraints.get(PathTokens.PROJECT)
                 or not constraints.get(PathTokens.SEQUENCE)):
-            return
+            return None
 
         data = Entity.get_by_case_insensitive(
             name=value,
@@ -918,7 +918,7 @@ def get_data_from_token(name, value, constraints=None):
         # A task depends on a project, a task type and an entity
         if (not constraints.get(PathTokens.PROJECT)
                 or not constraints.get(PathTokens.TASK_TYPE)):
-            return
+            return None
 
         kwargs = {
             "name": value,
@@ -931,7 +931,7 @@ def get_data_from_token(name, value, constraints=None):
                 kwargs["entity_id"] = constraints[entity]
                 break
         else:
-            return
+            return None
 
         data = Task.get_by_case_insensitive(**kwargs)
 
@@ -959,7 +959,7 @@ def get_data_from_token(name, value, constraints=None):
         # An entity depends on a project and an entity type
         if (not constraints.get(PathTokens.PROJECT)
                 or not constraints.get(PathTokens.ENTITY_TYPE)):
-            return
+            return None
 
         data = Entity.get_by_case_insensitive(
             name=value,
