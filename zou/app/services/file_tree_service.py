@@ -871,7 +871,7 @@ def get_data_from_token(name, value, constraints=None):
 
         data = Entity.get_by_case_insensitive(
             name=value,
-            asset_type_id=constraints[PathTokens.ASSET_TYPE],
+            entity_type_id=constraints[PathTokens.ASSET_TYPE],
             project_id=constraints[PathTokens.PROJECT]
         )
 
