@@ -2,6 +2,7 @@ import os
 import re
 import json
 
+from collections import OrderedDict
 from slugify import slugify
 
 from zou.app import app
@@ -787,7 +788,7 @@ def get_asset_task_from_path(file_path, project, mode="working", sep="/"):
 
 
 def extract_variable_values_from_path(elements, template_elements):
-    data_names = {}
+    data_names = OrderedDict()
     max_count = min(len(elements), len(template_elements))
     for i, template_element in enumerate(template_elements):
         if i == max_count:
@@ -1152,21 +1153,29 @@ def guess_from_path(project_id, file_path, sep="/"):
             # This prevents getting wrong data in database, like a data
             # with same name in other project.
             for template_element in template_elements:
+                # Get template_element corresponding token.
+                # Some template_element don't have a corresponding token,
+                # like "05_publish" folder, for example.
                 for token, token_value in tokens.items():
-                    if "<{}>".format(token) not in template_element:
-                        continue
+                    if "<{}>".format(token) in template_element:
+                        break
+                else:
+                    continue
 
-                    # Try to get data from database using token and its value
-                    data = get_data_from_token(
-                        token, token_value, constraints=template_data)
+                # Try to get data from database using token and its value
+                data = get_data_from_token(token, token_value, template_data)
 
-                    if not data:
-                        continue
+                # Stop trying to get data from given template on latest valid
+                # data found.
+                if not data:
+                    break
 
-                    if isinstance(data, str):
-                        template_data[token] = data
-                    else:
-                        template_data[token] = data.serialize()["id"]
+                if isinstance(data, str):
+                    template_data[token] = data
+                elif isinstance(data, int):
+                    template_data[token] = str(data)
+                else:
+                    template_data[token] = data.serialize()["id"]
 
             if template_data not in matching_templates:
                 matching_templates.append(template_data)
