@@ -948,7 +948,10 @@ def get_data_from_token(name, value, constraints=None):
         data = value
 
     elif name == PathTokens.VERSION:
-        data = value
+        try:
+            data = int(value)
+        except ValueError:
+            return None
 
     elif name == PathTokens.ENTITY_TYPE:
         data = EntityType.get_by_case_insensitive(
