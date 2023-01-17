@@ -792,7 +792,12 @@ def extract_variable_values_from_path(elements, template_elements):
         if i == max_count:
             break
 
-        token = re.search("<(\w*)>", template_element)
+        # Use prefix and suffix to get only the token value.
+        # For example, for `v<Version>` and `v003`, the result will be `003`
+        # without the `v` prefix.
+        token = re.search(
+            r"(?P<prefix>\w*)<(?P<token>\w*)>(?P<suffix>\w*)",
+            template_element)
 
         if token is None:
             if template_element == elements[i]:
@@ -802,11 +807,12 @@ def extract_variable_values_from_path(elements, template_elements):
                     "{} doesn't match {}".format(elements, template_elements)
                 )
 
-        data_type = token.group()
-        data_type = data_type[1: len(data_type) - 1]
+        data_type = token.group("token")
         value = elements[i].replace("_", " ")
-        value = value.capitalize()
-        data_names[data_type] = value
+        value = value[len(token.group("prefix")) : len(value) - len(token.group("suffix"))]
+
+        if not data_names.get(data_type):
+            data_names[data_type] = value
 
     return data_names
 
