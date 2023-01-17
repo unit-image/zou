@@ -6,6 +6,7 @@ from slugify import slugify
 
 from zou.app import app
 
+from zou.app.models.asset_instance import AssetInstance
 from zou.app.models.entity import Entity
 from zou.app.models.entity_type import EntityType
 from zou.app.models.output_type import OutputType
@@ -904,6 +905,19 @@ def get_data_from_token(name, value, constraints=None):
             project_id=constraints[PathTokens.PROJECT]
         )
 
+    elif name == PathTokens.SCENE:
+        # A scene depends on a project and a sequence
+        if (not constraints.get(PathTokens.PROJECT)
+                or not constraints.get(PathTokens.EPISODE)):
+            return None
+
+        data = Entity.get_by_case_insensitive(
+            name=value,
+            entity_type_id=shots_service.get_scene_type()["id"],
+            project_id=constraints[PathTokens.PROJECT],
+            parent_id=constraints[PathTokens.SEQUENCE]
+        )
+
     elif name == PathTokens.OUTPUT_TYPE:
         data = OutputType.get_by_case_insensitive(name=value)
 
@@ -977,7 +991,13 @@ def get_data_from_token(name, value, constraints=None):
         )
 
     elif name == PathTokens.INSTANCE:
-        return value
+        if not constraints.get(PathTokens.EPISODE):
+            return None
+
+        data = AssetInstance.get_by_case_insensitive(
+            name=slugify(value, separator="_"),
+            episode_id=constraints.get(PathTokens.EPISODE)
+        )
 
     return data
 
