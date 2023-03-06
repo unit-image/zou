@@ -11,7 +11,12 @@ from flask_migrate import Migrate
 from flask_mail import Mail
 from jwt import ExpiredSignatureError
 
+
 from . import config
+from .metrics import (
+    init_metrics,
+    configure_metrics,
+)
 from .stores import auth_tokens_store
 from .services.exception import (
     ModelWithRelationsDeletionException,
@@ -26,6 +31,10 @@ from zou.app.utils import cache
 
 app = Flask(__name__)
 app.config.from_object(config)
+
+export_metrics = app.config["EXPORT_METRICS"]
+if export_metrics:
+    metrics = init_metrics()
 
 logs.configure_logs(app)
 
@@ -127,3 +136,6 @@ def load_api():
 
 
 load_api()
+
+if export_metrics:
+    configure_metrics(app, metrics)
