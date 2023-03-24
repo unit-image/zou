@@ -864,26 +864,28 @@ def get_data_from_token(name, value, constraints=None):
         constraints = {}
     data = None
 
+    value = slugify(value, separator="_")
+
     if name == PathTokens.ASSET:
         # An asset depends on a project and an asset type
         if (not constraints.get(PathTokens.PROJECT)
                 or not constraints.get(PathTokens.ASSET_TYPE)):
             return None
 
-        data = Entity.get_by(
-            name=Entity.name.ilike(value),
+        data = Entity.get_by_ilike(
+            name=value,
             entity_type_id=constraints[PathTokens.ASSET_TYPE],
             project_id=constraints[PathTokens.PROJECT]
         )
 
     elif name == PathTokens.ASSET_TYPE:
-        data = EntityType.get_by(
-            name=EntityType.name.ilike(value)
+        data = EntityType.get_by_ilike(
+            name=value
         )
 
     elif name == PathTokens.DEPARTMENT:
-        data = Department.get_by(
-            name=Department.name.ilike(value)
+        data = Department.get_by_ilike(
+            name=value
         )
 
     elif name == PathTokens.EPISODE:
@@ -891,8 +893,8 @@ def get_data_from_token(name, value, constraints=None):
         if not constraints.get(PathTokens.PROJECT):
             return None
 
-        data = Entity.get_by(
-            name=Entity.name.ilike(value),
+        data = Entity.get_by_ilike(
+            name=value,
             entity_type_id=shots_service.get_episode_type()["id"],
             project_id=constraints[PathTokens.PROJECT]
         )
@@ -903,8 +905,8 @@ def get_data_from_token(name, value, constraints=None):
                 or not constraints.get(PathTokens.EPISODE)):
             return None
 
-        data = Entity.get_by(
-            name=Entity.name.ilike(value),
+        data = Entity.get_by_ilike(
+            name=value,
             entity_type_id=shots_service.get_sequence_type()["id"],
             parent_id=constraints[PathTokens.EPISODE],
             project_id=constraints[PathTokens.PROJECT]
@@ -916,17 +918,15 @@ def get_data_from_token(name, value, constraints=None):
                 or not constraints.get(PathTokens.EPISODE)):
             return None
 
-        data = Entity.get_by(
-            name=Entity.name.ilike(value),
+        data = Entity.get_by_ilike(
+            name=value,
             entity_type_id=shots_service.get_scene_type()["id"],
             project_id=constraints[PathTokens.PROJECT],
             parent_id=constraints[PathTokens.SEQUENCE]
         )
 
     elif name == PathTokens.OUTPUT_TYPE:
-        data = OutputType.get_by(
-            name=OutputType.name.ilike(value)
-        )
+        data = OutputType.get_by_ilike(name=value)
 
     elif name == PathTokens.SHOT:
         # A shot depends on a project and a sequence
@@ -934,8 +934,8 @@ def get_data_from_token(name, value, constraints=None):
                 or not constraints.get(PathTokens.SEQUENCE)):
             return None
 
-        data = Entity.get_by(
-            name=Entity.name.ilike(value),
+        data = Entity.get_by_ilike(
+            name=value,
             entity_type_id=shots_service.get_shot_type()["id"],
             parent_id=constraints[PathTokens.SEQUENCE],
             project_id=constraints[PathTokens.PROJECT]
@@ -948,7 +948,7 @@ def get_data_from_token(name, value, constraints=None):
             return None
 
         kwargs = {
-            "name": Task.name.ilike(value),
+            "name": value,
             "task_type_id": constraints[PathTokens.TASK_TYPE],
             "project_id": constraints[PathTokens.PROJECT]
         }
@@ -960,15 +960,13 @@ def get_data_from_token(name, value, constraints=None):
         else:
             return None
 
-        data = Task.get_by(**kwargs)
+        data = Task.get_by_ilike(**kwargs)
 
     elif name == PathTokens.TASK_TYPE:
-        data = TaskType.get_by(
-            name=TaskType.name.ilike(value))
+        data = TaskType.get_by_ilike(name=value)
 
     elif name == PathTokens.PROJECT:
-        data = Project.get_by(
-            name=Project.name.ilike(value))
+        data = Project.get_by_ilike(name=value)
 
     elif name == PathTokens.NAME:
         data = value
@@ -983,9 +981,7 @@ def get_data_from_token(name, value, constraints=None):
             return None
 
     elif name == PathTokens.ENTITY_TYPE:
-        data = EntityType.get_by(
-            name=EntityType.name.ilike(value)
-        )
+        data = EntityType.get_by_ilike(name=value)
 
     elif name == PathTokens.ENTITY:
         # An entity depends on a project and an entity type
@@ -993,8 +989,8 @@ def get_data_from_token(name, value, constraints=None):
                 or not constraints.get(PathTokens.ENTITY_TYPE)):
             return None
 
-        data = Entity.get_by(
-            name=Entity.name.ilike(value),
+        data = Entity.get_by_ilike(
+            name=value,
             entity_type_id=constraints[PathTokens.ENTITY_TYPE],
             project_id=constraints[PathTokens.PROJECT]
         )
@@ -1003,8 +999,8 @@ def get_data_from_token(name, value, constraints=None):
         if not constraints.get(PathTokens.EPISODE):
             return None
 
-        data = AssetInstance.get_by(
-            name=AssetInstance.name.ilike(value),
+        data = AssetInstance.get_by_ilike(
+            name=value,
             episode_id=constraints.get(PathTokens.EPISODE)
         )
 
