@@ -31,10 +31,10 @@ def create_or_update_day_worked(
         raise WrongDateFormatException
 
     if day_worked is not None:
-        if work_duration:
+        if work_duration is not None:
             day_worked.update({"work_duration": work_duration})
 
-        if variable_time:
+        if variable_time is not None:
             day_worked.update({"variable_time": variable_time})
 
         if justification:

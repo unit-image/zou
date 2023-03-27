@@ -36,7 +36,8 @@ class PersonDaysWorkedTestCase(ApiDBTestCase):
                 month=today.month,
                 day=today.day),
             {
-                "work_duration": 1
+                "work_duration": 1,
+                "variable_time": -2,
             }
         )
 
