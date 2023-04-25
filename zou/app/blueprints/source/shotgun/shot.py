@@ -21,9 +21,6 @@ class ImportShotgunShotsResource(BaseImportShotgunResource):
         self.project_map = Project.get_id_map(field="name")
         self.entity_status_ids = EntityStatus.get_id_map(field="short_name")
 
-    def extract_status_names(self, sg_projects):
-        return {x["sg_status"] for x in sg_projects}
-
     def extract_data(self, sg_shot):
         (frame_in, frame_out) = self.extract_frame_range(sg_shot)
         custom_fields = self.extract_custom_data(sg_shot)
