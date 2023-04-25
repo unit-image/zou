@@ -52,6 +52,7 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
         entity_status_id = self.entity_status_ids.get(
             sg_asset["sg_status_list"], None
         )
+        custom_fields = self.extract_custom_data(sg_asset)
 
         return {
             "name": sg_asset["code"],
@@ -61,6 +62,7 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
             "project_id": project_id,
             "parent_shotgun_ids": parent_shotgun_ids,
             "entity_status_id": entity_status_id,
+            "data": custom_fields,
         }
 
     def import_entry(self, data):
@@ -93,6 +95,10 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
             assets_service.update_asset(entity.id, {"entities_in": parents})
 
         return entity
+
+    def is_custom_field(self, name):
+        non_custom_fields = ["sg_asset_type", "sg_status_list"]
+        return name[:3] == "sg_" and name not in non_custom_fields
 
     def save_entity(self, data):
         entity = None

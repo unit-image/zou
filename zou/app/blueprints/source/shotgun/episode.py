@@ -24,6 +24,7 @@ class ImportShotgunEpisodesResource(BaseImportShotgunResource):
         )
         if project_id is None:
             raise ShotgunEntryImportFailed
+        custom_fields = self.extract_custom_data(sg_episode)
 
         return {
             "name": sg_episode["code"],
@@ -32,6 +33,7 @@ class ImportShotgunEpisodesResource(BaseImportShotgunResource):
             "project_id": project_id,
             "entity_type_id": self.episode_type["id"],
             "entity_status_id": entity_status_id,
+            "data": custom_fields,
         }
 
     def get_project(self, sg_episode):
@@ -58,6 +60,10 @@ class ImportShotgunEpisodesResource(BaseImportShotgunResource):
             current_app.logger.info("Episode updated: %s" % episode)
 
         return episode
+
+    def is_custom_field(self, name):
+        non_custom_fields = ["sg_status_list", ]
+        return name[:3] == "sg_" and name not in non_custom_fields
 
 
 class ImportRemoveShotgunEpisodeResource(ImportRemoveShotgunBaseResource):

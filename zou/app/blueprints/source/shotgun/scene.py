@@ -28,6 +28,7 @@ class ImportShotgunScenesResource(BaseImportShotgunResource):
         entity_status_id = self.entity_status_ids.get(
             sg_scene["sg_status_list"], None
         )
+        custom_fields = self.extract_custom_data(sg_scene)
 
         data = {
             "name": sg_scene["code"],
@@ -36,6 +37,7 @@ class ImportShotgunScenesResource(BaseImportShotgunResource):
             "entity_type_id": scene_type["id"],
             "parent_id": sequence_id,
             "entity_status_id": entity_status_id,
+            "data": custom_fields,
         }
         return data
 
@@ -73,6 +75,10 @@ class ImportShotgunScenesResource(BaseImportShotgunResource):
             current_app.logger.info("Scene updated: %s" % scene)
 
         return scene
+
+    def is_custom_field(self, name):
+        non_custom_fields = ["sg_status_list", ]
+        return name[:3] == "sg_" and name not in non_custom_fields
 
     def filtered_entries(self):
         return self.sg_entries
