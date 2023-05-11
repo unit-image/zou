@@ -9,14 +9,17 @@ import os
 
 from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
 
-prometheus_multiproc_dir = os.environ['PROMETHEUS_MULTIPROC_DIR']
-if not os.path.isdir(prometheus_multiproc_dir):
+export_metrics = os.getenv('EXPORT_METRICS')
+prometheus_multiproc_dir = os.getenv('PROMETHEUS_MULTIPROC_DIR')
+if export_metrics and not os.path.isdir(prometheus_multiproc_dir):
     os.makedirs(prometheus_multiproc_dir)
 
 
 def when_ready(server):
-    GunicornPrometheusMetrics.start_http_server_when_ready(9180)
+    if export_metrics:
+        GunicornPrometheusMetrics.start_http_server_when_ready(9180)
 
 
 def child_exit(server, worker):
-    GunicornPrometheusMetrics.mark_process_dead_on_child_exit(worker.pid)
+    if export_metrics:
+        GunicornPrometheusMetrics.mark_process_dead_on_child_exit(worker.pid)
