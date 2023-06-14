@@ -45,18 +45,19 @@ def configure_metrics(app, metrics):
         metrics._default_labels = previous_default_labels
 
         # counter metrics
-        metrics.register_default(
-            metrics.counter(
-                'by_path_counter', 'Request count by request paths',
-                labels={
-                    'path': lambda: request.path,
-                    'endpoint': lambda: request.endpoint,
-                    'blueprint': lambda: request.blueprint,
-                    'method': lambda: request.method,
-                    'status': lambda r: _to_status_code(r.status_code),
-                }
+        if os.getenv('EXPORT_PATH_METRICS', False):
+            metrics.register_default(
+                metrics.counter(
+                    'by_path_counter', 'Request count by request paths',
+                    labels={
+                        'path': lambda: request.path,
+                        'endpoint': lambda: request.endpoint,
+                        'blueprint': lambda: request.blueprint,
+                        'method': lambda: request.method,
+                        'status': lambda r: _to_status_code(r.status_code),
+                    }
+                )
             )
-        )
 
         metrics.register_default(
             metrics.counter(

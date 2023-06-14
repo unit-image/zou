@@ -113,4 +113,7 @@ FILE_TREE_FOLDER = os.getenv("FILE_TREE_FOLDER")
 
 # Unit Image Specifics
 DEFAULT_TIMESPENT_VALIDATION_STATUS = 'Pending'
+# Exports endpoint and blueprints metrics. To export path related metrics,
+# define `EXPORT_METRICS` AND `EXPORT_PATH_METRICS`. Be careful as this
+# can create a lot of time series.
 EXPORT_METRICS = os.getenv('EXPORT_METRICS')
