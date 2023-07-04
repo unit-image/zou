@@ -1,6 +1,4 @@
 #!/bin/bash
-apt install -y netcat
-
 while ! nc -z $DB_HOST $DB_PORT; do
     echo Waiting for database service to start...;
     sleep 1;
