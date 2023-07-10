@@ -3,7 +3,11 @@ FROM python:3.7-slim-buster
 EXPOSE 5000
 
 # install pg_dump & ffmpeg
-RUN apt-get update && apt-get install postgresql-client --yes && apt-get install ffmpeg --yes && apt-get install netcat --yes
+RUN apt-get update && apt-get install --yes \
+    curl \
+    ffmpeg \
+    netcat \
+    postgresql-client
 
 # Install external dependencies
 # We do it separatly to leverage docker build cache
