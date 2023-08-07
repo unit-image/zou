@@ -1,7 +1,11 @@
 from zou.app.models.output_file import OutputFile
 from zou.app.models.entity import Entity
 from zou.app.models.project import Project
-from zou.app.services import user_service, entities_service
+from zou.app.services import (
+    user_service,
+    entities_service,
+    persons_service,
+)
 from zou.app.utils import permissions, events
 
 from .base import BaseModelsResource, BaseModelResource
@@ -42,10 +46,14 @@ class OutputFileResource(BaseModelResource):
     def check_update_permissions(self, output_file, data):
         if permissions.has_manager_permissions():
             return True
-        else:
-            return user_service.check_working_on_entity(
-                output_file["temporal_entity_id"] or output_file["entity_id"]
-            )
+
+        current_user = persons_service.get_current_user()
+        if output_file["person_id"] == current_user["id"]:
+            return True
+
+        return user_service.check_working_on_entity(
+            output_file["temporal_entity_id"] or output_file["entity_id"]
+        )
 
     def pre_update(self, instance_dict, data):
         self.upstreams_change = False
