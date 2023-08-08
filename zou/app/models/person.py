@@ -13,9 +13,17 @@ from zou.app.models.base import BaseMixin
 
 department_link = db.Table(
     "department_link",
-    db.Column("person_id", UUIDType(binary=False), db.ForeignKey("person.id")),
     db.Column(
-        "department_id", UUIDType(binary=False), db.ForeignKey("department.id")
+        "person_id",
+        UUIDType(binary=False),
+        db.ForeignKey("person.id"),
+        primary_key=True,
+    ),
+    db.Column(
+        "department_id",
+        UUIDType(binary=False),
+        db.ForeignKey("department.id"),
+        primary_key=True,
     ),
 )
 

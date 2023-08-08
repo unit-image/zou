@@ -31,7 +31,8 @@ class TimeSpent(db.Model, BaseMixin, SerializerMixin):
     validation_status_id = db.Column(
         UUIDType(binary=False),
         db.ForeignKey("time_spent_status.id"),
-        nullable=False
+        nullable=False,
+        index=True,
     )
 
     __table_args__ = (
