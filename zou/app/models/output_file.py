@@ -1,4 +1,5 @@
 from sqlalchemy.orm import relationship, validates
+from sqlalchemy.sql import schema
 from sqlalchemy_utils import UUIDType
 
 from zou.app import db
@@ -107,6 +108,11 @@ class OutputFile(db.Model, BaseMixin, SerializerMixin):
         db.CheckConstraint(
             "char_length(representation) > 0",
             name="representation_min_length"
+        ),
+        schema.Index(
+            'ix_output_file_path',
+            path,
+            postgresql_using='hash',
         ),
     )
 
