@@ -17,6 +17,7 @@ class EventsResource(Resource, ArgsMixin):
             ("only_files", False, False),
             ("page_size", None, False),
             ("project_id", None, False),
+            ("order_type", 'desc', False),
         ])
         permissions.check_manager_permissions()
         before = self.parse_date_parameter(args["before"])
@@ -24,6 +25,7 @@ class EventsResource(Resource, ArgsMixin):
         page_size = int(args["page_size"]) if args["page_size"] else None
         only_files = args["only_files"] == "true"
         project_id = args.get("project_id", None)
+        order_type = args["order_type"]
         if project_id is not None and not fields.is_valid_id(project_id):
             raise WrongParameterException(
                 "The project_id parameter is not a valid id"
@@ -34,7 +36,8 @@ class EventsResource(Resource, ArgsMixin):
                 before=before,
                 page_size=page_size,
                 only_files=only_files,
-                project_id=project_id
+                project_id=project_id,
+                order_type=order_type
             )
 
 
