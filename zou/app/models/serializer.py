@@ -30,6 +30,20 @@ class SerializerMixin(object):
         obj_dict["type"] = obj_type or type(self).__name__
         return obj_dict
 
+    def serialize_relations(self) -> dict:
+        """
+        Serializes only the relations of the object.
+
+        :returns: The serialized relations.
+        """
+        attrs = inspect(self).attrs.keys()
+        obj_dict = {
+            attr: serialize_value(getattr(self, attr))
+            for attr in attrs
+            if self.is_join(attr)
+        }
+        return obj_dict
+
     @staticmethod
     def serialize_list(models, obj_type=None, relations=False):
         return [
