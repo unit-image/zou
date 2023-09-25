@@ -56,20 +56,31 @@ class OutputFileResource(BaseModelResource):
             output_file["temporal_entity_id"] or output_file["entity_id"]
         )
 
-    def pre_update(self, instance_dict, data):
+    def pre_update(self, instance_dict: dict, data: dict):
+        """
+        Validates the update data and prepares the event update data.
+
+        :param instance_dict: The serialized object.
+        :param data: The update data.
+        :raises ArgumentsException: When the given update parameters are unsupported.
+        """
         self.upstreams_change = False
 
-        current_upstreams = list(set(instance_dict.get("upstreams", [])))
-        new_upstreams = list(set(data.get("upstreams", [])))
-
-        if current_upstreams != new_upstreams:
-            self.upstreams_change = True
-
-    def update_data(self, data, instance_id):
         if "downstreams" in data:
             raise ArgumentsException(
                 "Cannot update downstreams directly. Please update the upstreams instead."
             )
+
+        if "upstreams" in data:
+            updated_upstreams = set(data["upstreams"])
+            instance = self.model.get(instance_dict["id"])
+            current_upstreams = set(instance.serialize_relations().get("upstreams", []))
+            if current_upstreams == updated_upstreams:
+                data.pop("upstreams")
+            else:
+                self.upstreams_change = True
+
+    def update_data(self, data, instance_id):
 
         # Replace upstream's id by corresponding OutputFile instance
         upstreams = data.get("upstreams", None)
