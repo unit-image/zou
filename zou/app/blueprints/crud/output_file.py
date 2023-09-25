@@ -79,12 +79,21 @@ class OutputFileResource(BaseModelResource):
 
         self.event_update_data = copy.deepcopy(data)
 
-    def update_data(self, data, instance_id):
+    def update_data(self, data: dict, instance_id: str) -> dict:
+        """
+        Converts the data into database-compatible data.
 
-        # Replace upstream's id by corresponding OutputFile instance
-        upstreams = data.get("upstreams", None)
-        if upstreams is not None:
-            data["upstreams"] = [OutputFile.get_by(id=upstream) for upstream in upstreams]
+        :param data: The data.
+        :param instance_id: The object's id.
+        :returns: The converted data.
+        """
+        if "upstreams" in data:
+            updated_upstreams_ids = list(set(data["upstreams"]))
+            data["upstreams"] = [
+                OutputFile.get_by(id=upstream_id)
+                for upstream_id in updated_upstreams_ids
+            ]
+
         return data
 
     def emit_update_event(self, instance_dict: dict):
