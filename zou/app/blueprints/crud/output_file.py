@@ -1,3 +1,5 @@
+import copy
+
 from zou.app.models.output_file import OutputFile
 from zou.app.models.entity import Entity
 from zou.app.models.project import Project
@@ -35,7 +37,6 @@ class OutputFilesResource(BaseModelsResource):
 class OutputFileResource(BaseModelResource):
     def __init__(self):
         BaseModelResource.__init__(self, OutputFile)
-        self.upstreams_change = False
 
     def check_read_permissions(self, instance):
         entity = entities_service.get_entity(instance["entity_id"])
@@ -64,8 +65,6 @@ class OutputFileResource(BaseModelResource):
         :param data: The update data.
         :raises ArgumentsException: When the given update parameters are unsupported.
         """
-        self.upstreams_change = False
-
         if "downstreams" in data:
             raise ArgumentsException(
                 "Cannot update downstreams directly. Please update the upstreams instead."
@@ -77,8 +76,8 @@ class OutputFileResource(BaseModelResource):
             current_upstreams = set(instance.serialize_relations().get("upstreams", []))
             if current_upstreams == updated_upstreams:
                 data.pop("upstreams")
-            else:
-                self.upstreams_change = True
+
+        self.event_update_data = copy.deepcopy(data)
 
     def update_data(self, data, instance_id):
 
@@ -88,9 +87,15 @@ class OutputFileResource(BaseModelResource):
             data["upstreams"] = [OutputFile.get_by(id=upstream) for upstream in upstreams]
         return data
 
-    def post_update(self, instance_dict):
-        if self.upstreams_change:
-            events.emit("output-file:upstreams-updated", {
-                "output_file_id": instance_dict["id"],
-                "upstreams": instance_dict.get("upstreams", [])
-            })
+    def emit_update_event(self, instance_dict: dict):
+        """
+        Emits the update event with the update information.
+
+        :param instance_dict: The serialized object.
+        """
+        self.event_update_data["output_file_id"] = instance_dict["id"]
+        events.emit(
+            "output-file:update",
+            self.event_update_data,
+            project_id=instance_dict.get("project_id", None),
+        )
