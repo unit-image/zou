@@ -7,6 +7,7 @@ from zou.app.services import (
     persons_service,
 )
 from zou.app.utils import permissions, events
+from zou.app.services.exception import ArgumentsException
 
 from .base import BaseModelsResource, BaseModelResource
 
@@ -66,7 +67,9 @@ class OutputFileResource(BaseModelResource):
 
     def update_data(self, data, instance_id):
         if "downstreams" in data:
-            data.pop("downstreams", None)
+            raise ArgumentsException(
+                "Cannot update downstreams directly. Please update the upstreams instead."
+            )
 
         # Replace upstream's id by corresponding OutputFile instance
         upstreams = data.get("upstreams", None)
