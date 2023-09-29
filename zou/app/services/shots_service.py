@@ -400,11 +400,11 @@ def get_scene_raw(scene_id):
     return scene
 
 
-def get_scene(scene_id):
+def get_scene(scene_id, relations=False):
     """
     Return given scene as a dictionary.
     """
-    return get_scene_raw(scene_id).serialize(obj_type="Scene")
+    return get_scene_raw(scene_id).serialize(obj_type="Scene", relations=relations)
 
 
 def get_full_scene(scene_id):
@@ -412,7 +412,7 @@ def get_full_scene(scene_id):
     Return given scene as a dictionary with extra data like project and sequence
     names.
     """
-    scene = get_scene(scene_id)
+    scene = get_scene(scene_id, relations=True)
     project = projects_service.get_project(scene["project_id"])
     sequence = get_sequence(scene["parent_id"])
     scene["project_name"] = project["name"]
