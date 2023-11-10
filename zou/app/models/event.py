@@ -13,11 +13,11 @@ class ApiEvent(db.Model, BaseMixin, SerializerMixin):
     task assignation, etc.).
     """
 
-    name = db.Column(db.String(80), nullable=False, index=True)
+    name = db.Column(db.String(80), nullable=False)
     user_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("person.id"), index=True
+        UUIDType(binary=False), db.ForeignKey("person.id")
     )
     project_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("project.id"), index=True
+        UUIDType(binary=False), db.ForeignKey("project.id")
     )
     data = db.Column(JSONB)

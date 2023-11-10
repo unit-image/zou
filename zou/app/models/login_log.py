@@ -17,7 +17,6 @@ class LoginLog(db.Model, BaseMixin, SerializerMixin):
         UUIDType(binary=False),
         db.ForeignKey("person.id"),
         nullable=False,
-        index=True,
     )
     ip_address = db.Column(IPAddressType)
     origin = db.Column(ChoiceType(ORIGINS))
