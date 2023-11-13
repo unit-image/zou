@@ -24,7 +24,8 @@ class FileStatusTestCase(ApiDBTestCase):
     def test_create_file_status(self):
         data = {
             "name": "open",
-            "color": "#000000"
+            "color": "#000000",
+            "short_name": "open",
         }
         self.file_status = self.post("data/file-status", data)
         self.assertIsNotNone(self.file_status["id"])

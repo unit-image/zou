@@ -796,7 +796,8 @@ class ApiDBTestCase(ApiTestCase):
     def generate_fixture_file_status(self):
         self.file_status = FileStatus.create(
             name="To review",
-            color="#FFFFFF"
+            color="#FFFFFF",
+            short_name="to_review",
         )
 
     def generate_fixture_working_file(self, name="main", revision=1):
