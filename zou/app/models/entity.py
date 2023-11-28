@@ -95,6 +95,7 @@ class Entity(db.Model, BaseMixin, SerializerMixin):
     preview_file_id = db.Column(
         UUIDType(binary=False),
         db.ForeignKey("preview_file.id", name="fk_main_preview"),
+        index=True,
     )
     data = db.Column(JSONB)
 

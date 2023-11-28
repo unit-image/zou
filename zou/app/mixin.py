@@ -67,14 +67,21 @@ class ArgsMixin(object):
         date = None
         if param is None:
             return date
-        try:
-            date = fields.get_date_object(param, "%Y-%m-%dT%H:%M:%S")
-        except Exception:
+        formats = [
+            r"%Y-%m-%dT%H:%M:%S.%f",
+            r"%Y-%m-%dT%H:%M:%S",
+            r"%Y-%m-%d",
+        ]
+        for format in formats:
             try:
-                date = fields.get_date_object(param, "%Y-%m-%d")
-            except Exception:
-                raise WrongParameterException(
-                    "Wrong date format for before argument."
-                    "Expected format: 2020-01-05T13:23:10 or 2020-01-05"
-                )
+                date = fields.get_date_object(param, format)
+                break
+            except ValueError:
+                continue
+        else:
+            raise WrongParameterException(
+                "Wrong date format for before argument."
+                "Expected format: 2020-01-05T13:23:10.123456, 2020-01-05T13:23:10 or 2020-01-05"
+            )
+
         return date

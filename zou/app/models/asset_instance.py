@@ -33,6 +33,7 @@ class AssetInstance(db.Model, BaseMixin, SerializerMixin):
     episode_id = db.Column(
         UUIDType(binary=False), db.ForeignKey("entity.id"), index=True
     )
+    shotgun_id = db.Column(db.Integer)
 
     __table_args__ = (
         db.UniqueConstraint(

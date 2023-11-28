@@ -11,3 +11,13 @@ class EventsResource(BaseModelsResource):
 class EventResource(BaseModelResource):
     def __init__(self):
         BaseModelResource.__init__(self, ApiEvent)
+
+    def serialize_instance(self, data):
+        serialized_data = data.serialize()
+
+        # Restore datetime microseconds for created_at field.
+        # Otherwise event handlers might get stuck in a loop handling all events of
+        # a second, not knowing which one is the last one.
+        serialized_data['created_at'] = data.created_at.isoformat()
+
+        return serialized_data

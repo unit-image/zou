@@ -9,4 +9,8 @@ class FileStatus(db.Model, BaseMixin, SerializerMixin):
     """
 
     name = db.Column(db.String(40), unique=True, nullable=False)
+    short_name = db.Column(
+        db.String(10), unique=True, nullable=False, index=True
+    )
     color = db.Column(db.String(7), nullable=False)
+    shotgun_id = db.Column(db.Integer)

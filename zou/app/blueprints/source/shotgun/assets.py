@@ -52,6 +52,7 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
         entity_status_id = self.entity_status_ids.get(
             sg_asset["sg_status_list"], None
         )
+        custom_fields = self.extract_custom_data(sg_asset)
 
         return {
             "name": sg_asset["code"],
@@ -61,6 +62,7 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
             "project_id": project_id,
             "parent_shotgun_ids": parent_shotgun_ids,
             "entity_status_id": entity_status_id,
+            "data": custom_fields,
         }
 
     def import_entry(self, data):
@@ -77,11 +79,26 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
             )
 
         if entity is not None:
-            for parent_shotgun_id in parent_shotgun_ids:
-                self.parent_map.setdefault(parent_shotgun_id, [])
-                self.parent_map[parent_shotgun_id].append(Entity.get(entity.id))
+            # Setting all parents every time, to ensure that parent removal works properly.
+            parents = [
+                Entity.get_by(shotgun_id=parent_shotgun_id)
+                for parent_shotgun_id in parent_shotgun_ids
+            ]
+            # Preserve entities_in that are not assets, since entities_in does not
+            # contain only parent assets.
+            parents.extend([
+                parent_entity
+                for parent_entity in entity.entities_in
+                if not assets_service.is_asset(parent_entity)
+            ])
+
+            assets_service.update_asset(entity.id, {"entities_in": parents})
 
         return entity
+
+    def is_custom_field(self, name):
+        non_custom_fields = ["sg_asset_type", "sg_status_list"]
+        return name[:3] == "sg_" and name not in non_custom_fields
 
     def save_entity(self, data):
         entity = None
@@ -100,28 +117,6 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
             else:
                 current_app.logger.info("Entity ignored: %s" % data["name"])
         return entity
-
-    def post_processing(self):
-        # We handle the fact that an asset can have multiple parents by using
-        # the entities out field as a children field.
-        for key in self.parent_map.keys():
-            try:
-                asset = assets_service.get_asset_by_shotgun_id(key)
-
-                asset = assets_service.get_full_asset(asset['id'])
-                former_children = [
-                    Entity.get(child_id)
-                    for child_id in asset.get('entities_out', [])
-                ]
-                children = list(set(self.parent_map[key] + former_children))
-                data = {"entities_out": children}
-
-                assets_service.update_asset(asset["id"], data)
-                assets_service.clear_asset_cache(asset["id"])
-            except AssetNotFoundException:
-                pass
-
-        return self.parent_map
 
 
 class ImportRemoveShotgunAssetResource(ImportRemoveShotgunBaseResource):

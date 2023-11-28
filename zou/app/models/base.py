@@ -66,6 +66,22 @@ class BaseMixin(object):
         return cls.query.filter(*filters).first()
 
     @classmethod
+    def get_by_ilike(cls, **kw):
+        """
+        Shorthand to retrieve data by using filters. It returns the first
+        element of the returned data using ilike for any String type value.
+        """
+        filters = []
+        for key, value in kw.items():
+            column = getattr(cls, key)
+            if isinstance(column.type, db.String):
+                filters.append(column.ilike(value))
+            else:
+                filters.append(column == value)
+
+        return cls.query.filter(*filters).first()
+
+    @classmethod
     def get_all(cls):
         """
         Shorthand to retrieve all data for a model.

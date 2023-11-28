@@ -1,3 +1,4 @@
+from sqlalchemy import asc, desc
 from zou.app.models.event import ApiEvent
 from zou.app.models.login_log import LoginLog
 from zou.app.utils import fields
@@ -8,13 +9,15 @@ def get_last_events(
     before=None,
     page_size=100,
     only_files=False,
-    project_id=None
+    project_id=None,
+    order_type='desc',
 ):
     """
     Return last 100 events published. If before parameter is set, it returns
     last 100 events before this date.
     """
-    query = ApiEvent.query.order_by(ApiEvent.created_at.desc())
+    direction = desc if order_type == 'desc' else asc
+    query = ApiEvent.query.order_by(direction(ApiEvent.created_at))
 
     if after is not None:
         query = query.filter(ApiEvent.created_at > after)

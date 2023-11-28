@@ -17,7 +17,10 @@ def get_redis_url():
 
 
 def create_app(redis_url):
-    socketio = SocketIO(logger=True)
+    socketio = SocketIO(
+        logger=True,
+        ping_timeout=60,
+    )
 
     app = Flask(__name__)
     app.config.from_object(config)
