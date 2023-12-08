@@ -2,7 +2,7 @@ import os
 import flask_fs
 import traceback
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, abort
 from flask_restful import current_app
 from flask_jwt_extended import JWTManager
 from flask_principal import Principal, identity_changed, Identity
@@ -55,6 +55,19 @@ cache.cache.init_app(app)  # Function caching
 flask_fs.init_app(app)  # To save files in object storage
 mail = Mail()
 mail.init_app(app)  # To send emails
+
+
+def filter_write_methods():
+    from zou.app.blueprints import auth
+    auth_blueprint = auth.blueprint
+    if request.method in ['PUT', 'POST', 'DELETE'] and not request.endpoint.startswith(auth_blueprint.import_name):
+        return abort(
+            403,
+            description="This Zou app is meant to be read only. You can only use GET methods except for login.")
+
+
+if os.getenv('POSTGRES_READONLY'):
+    app.before_request(filter_write_methods)
 
 
 @app.teardown_appcontext
