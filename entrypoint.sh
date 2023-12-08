@@ -4,7 +4,7 @@ while ! nc -z $DB_HOST $DB_PORT; do
     sleep 1;
 done
 
-if [ -v ALEMBIC_REVISION ]; then
+if [ ! -z "$ALEMBIC_REVISION" ]; then
     cd /opt/zou/zou/migrations
     export FLASK_APP=/opt/zou/zou/app/__init__.py
     if [ "$ALEMBIC_REVISION" == "head" ]; then
