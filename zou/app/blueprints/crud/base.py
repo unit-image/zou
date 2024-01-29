@@ -6,6 +6,7 @@ from flask import request, abort
 from flask_restful import Resource, current_app
 from flask_jwt_extended import jwt_required
 
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, StatementError
 
 from zou.app.utils import events, fields, permissions
@@ -84,6 +85,16 @@ class BaseModelsResource(Resource):
 
                 else:
                     filters[key] = value
+
+            elif key.endswith('__start') and key.rsplit('__', 1 )[0] in column_names:
+                column_name = key.rsplit('__start', 1 )[0]
+                field_key = getattr(self.model, column_name)
+                in_filter.append(field_key.__ge__(func.cast(value, field_key.type)))
+
+            elif key.endswith('__end') and key.rsplit('__', 1 )[0] in column_names:
+                column_name = key.rsplit('__end', 1 )[0]
+                field_key = getattr(self.model, column_name)
+                in_filter.append(field_key.__le__(func.cast(value, field_key.type)))
 
         return (many_join_filter, in_filter, name_filter, filters)
 
