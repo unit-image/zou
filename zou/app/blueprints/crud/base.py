@@ -111,8 +111,8 @@ class BaseModelsResource(Resource):
         for value in name_filter:
             query = query.filter(self.model.name.ilike(value))
 
-        for id_filter in in_filter:
-            query = query.filter(id_filter)
+        for filter in in_filter:
+            query = query.filter(filter)
 
         for (key, value) in many_join_filter:
             query = query.filter(getattr(self.model, key).any(id=value))
