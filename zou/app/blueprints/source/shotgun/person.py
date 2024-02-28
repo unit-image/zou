@@ -4,6 +4,8 @@ from zou.app import db
 from zou.app.models.department import Department
 from zou.app.models.person import Person, department_link as DepartmentLink
 from zou.app.utils import auth
+from zou.app.utils import events
+
 from zou.app.blueprints.source.shotgun.exception import ShotgunEntryImportFailed
 from zou.app.blueprints.source.shotgun.base import (
     BaseImportShotgunResource,
@@ -52,12 +54,20 @@ class ImportShotgunPersonsResource(BaseImportShotgunResource):
                 person = Person(**data)
                 person.save()
                 current_app.logger.info("Person created: %s" % person)
+                events.emit(
+                    "person:new-import",
+                    {"person_id": str(person.id)}
+                )
             else:
                 if person.password is None or len(person.password) == 0:
                     data["password"] = auth.encrypt_password("default")
 
                 person.update(data)
                 current_app.logger.info("Person updated: %s" % person)
+                events.emit(
+                    "person:update-import",
+                    {"person_id": str(person.id)}
+                )
 
             # create or update a department/person link if needed
             if imported_department:
@@ -83,6 +93,11 @@ class ImportShotgunPersonsResource(BaseImportShotgunResource):
                         ))
 
                 person.save()
+                events.emit(
+                    "person:update-import",
+                    {"person_id": str(person.id), 
+                     "department": department.name}
+                )
 
             return person
 

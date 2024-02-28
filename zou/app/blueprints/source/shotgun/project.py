@@ -2,6 +2,7 @@ from flask_restful import current_app
 
 from zou.app.models.project import Project
 from zou.app.models.project_status import ProjectStatus
+from zou.app.utils import events
 
 from zou.app.services import file_tree_service, projects_service
 
@@ -66,11 +67,17 @@ class ImportShotgunProjectsResource(BaseImportShotgunResource):
 
             project.save()
             current_app.logger.info("Project created: %s" % project)
-
+            events.emit(
+                "project:new-import",
+                {"project_id": str(project.id)},
+            )
         else:
             project.update(data)
             current_app.logger.info("Project updated: %s" % project)
-
+            events.emit(
+                "project:update-import",
+                {"project_id": str(project.id)},
+            )
         return project
 
 

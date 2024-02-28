@@ -6,6 +6,7 @@ from zou.app.models.project import Project
 from zou.app.models.entity import Entity
 from zou.app.models.entity_type import EntityType
 from zou.app.models.entity_status import EntityStatus
+from zou.app.utils import events
 
 from zou.app.blueprints.source.shotgun.base import (
     BaseImportShotgunResource,
@@ -109,11 +110,23 @@ class ImportShotgunAssetsResource(BaseImportShotgunResource):
             entity.update(data)
             assets_service.clear_asset_cache(str(entity.id))
             current_app.logger.info("Entity updated: %s" % entity)
+            events.emit(
+                "asset:update-import",
+                {"asset_id": str(entity.id)},
+                project_id=str(entity.project_id)
+            )
+
         except AssetNotFoundException:
             if data.get("entity_type_id", None) is not None:
                 entity = Entity(**data)
                 entity.save()
                 current_app.logger.info("Entity created: %s" % entity)
+                events.emit(
+                    "asset:new-import",
+                    {"asset_id": str(entity.id)},
+                    project_id=str(entity.project_id)
+                )
+
             else:
                 current_app.logger.info("Entity ignored: %s" % data["name"])
         return entity

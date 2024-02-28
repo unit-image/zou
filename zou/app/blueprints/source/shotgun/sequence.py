@@ -3,6 +3,8 @@ from flask_restful import current_app
 from zou.app.models.project import Project
 from zou.app.models.entity import Entity
 from zou.app.models.entity_status import EntityStatus
+from zou.app.utils import events
+
 from zou.app.services import shots_service
 from zou.app.blueprints.source.shotgun.base import (
     BaseImportShotgunResource,
@@ -70,7 +72,11 @@ class ImportShotgunSequencesResource(BaseImportShotgunResource):
             sequence = Entity(**data)
             sequence.save()
             current_app.logger.info("Sequence created: %s" % sequence)
-
+            events.emit(
+                "sequence:new-import",
+                {"sequence_id": str(sequence.id)},
+                project_id=str(sequence.project_id)
+            )
         elif sequence is not None:
             if similar_sequence is None:
                 sequence.update(data)
@@ -84,7 +90,11 @@ class ImportShotgunSequencesResource(BaseImportShotgunResource):
                 )
                 sequence.save()
             current_app.logger.info("Sequence updated: %s" % sequence)
-
+            events.emit(
+                "sequence:update-import",
+                {"sequence_id": str(sequence.id)},
+                project_id=str(sequence.project_id)
+            )
         return sequence
 
     def is_custom_field(self, name):

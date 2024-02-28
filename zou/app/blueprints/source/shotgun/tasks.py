@@ -5,6 +5,7 @@ from zou.app.models.task_status import TaskStatus
 from zou.app.models.project import Project
 from zou.app.models.person import Person
 from zou.app.models.task import Task
+from zou.app.utils import events
 
 from zou.app.services import deletion_service, tasks_service
 
@@ -97,6 +98,12 @@ class ImportShotgunTasksResource(BaseImportShotgunResource):
             task = Task(**data)
             task.save()
             current_app.logger.info("Task created: %s" % task)
+
+            events.emit(
+                "task:new-import",
+                {"task_id": str(task.id)},
+                project_id=str(task.project_id)
+            )
         else:
             existing_task = Task.get_by(
                 name=data["name"],
@@ -114,6 +121,13 @@ class ImportShotgunTasksResource(BaseImportShotgunResource):
             task.update(data)
             tasks_service.clear_task_cache(str(task.id))
             current_app.logger.info("Task updated: %s" % task)
+
+            events.emit(
+                "task:update-import",
+                {"task_id": str(task.id)},
+                project_id=str(task.project_id)
+            )
+
 
         return task
 
