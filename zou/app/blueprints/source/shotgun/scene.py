@@ -3,6 +3,7 @@ from flask_restful import current_app
 from zou.app.models.project import Project
 from zou.app.models.entity import Entity
 from zou.app.models.entity_status import EntityStatus
+from zou.app.utils import events
 
 from zou.app.services import shots_service
 
@@ -68,12 +69,21 @@ class ImportShotgunScenesResource(BaseImportShotgunResource):
             scene = Entity(**data)
             scene.save()
             current_app.logger.info("Scene created: %s" % scene)
+            events.emit(
+                "scene:new-import",
+                {"scene_id": str(scene.id)},
+                project_id=str(scene.project_id)
+            )
 
         else:
             scene.update(data)
             scene.save()
             current_app.logger.info("Scene updated: %s" % scene)
-
+            events.emit(
+                "scene:update-import",
+                {"scene_id": str(scene.id)},
+                project_id=str(scene.project_id)
+            )
         return scene
 
     def is_custom_field(self, name):

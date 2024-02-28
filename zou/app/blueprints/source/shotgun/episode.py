@@ -3,6 +3,8 @@ from flask_restful import current_app
 from zou.app.models.project import Project
 from zou.app.models.entity import Entity
 from zou.app.models.entity_status import EntityStatus
+from zou.app.utils import events
+
 from zou.app.services import shots_service
 from zou.app.blueprints.source.shotgun.base import (
     BaseImportShotgunResource,
@@ -53,11 +55,21 @@ class ImportShotgunEpisodesResource(BaseImportShotgunResource):
             episode = Entity(**data)
             episode.save()
             current_app.logger.info("Episode created: %s" % episode)
+            events.emit(
+                "episode:new-import",
+                {"episode_id": str(episode.id)},
+                project_id=str(episode.project_id)
+            )
 
         else:
             episode.update(data)
             episode.save()
             current_app.logger.info("Episode updated: %s" % episode)
+            events.emit(
+                "episode:update-import",
+                {"episode_id": str(episode.id)},
+                project_id=str(episode.project_id)
+            )
 
         return episode
 

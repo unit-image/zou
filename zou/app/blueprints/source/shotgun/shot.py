@@ -3,6 +3,7 @@ from flask_restful import current_app
 from zou.app.models.project import Project
 from zou.app.models.entity import Entity
 from zou.app.models.entity_status import EntityStatus
+from zou.app.utils import events
 
 from zou.app.services import shots_service
 
@@ -97,7 +98,11 @@ class ImportShotgunShotsResource(BaseImportShotgunResource):
             shot = Entity(**data)
             shot.save()
             current_app.logger.info("Shot created: %s" % shot)
-
+            events.emit(
+                "shot:new-import",
+                {"shot_id": str(shot.id)},
+                project_id=str(shot.project_id)
+            )
         else:
             if shot.data is None:
                 shot.data = {}
@@ -106,7 +111,11 @@ class ImportShotgunShotsResource(BaseImportShotgunResource):
             shot.save()
             shots_service.clear_shot_cache(str(shot.id))
             current_app.logger.info("Shot updated: %s" % shot)
-
+            events.emit(
+                "shot:update-import",
+                {"shot_id": str(shot.id)},
+                project_id=str(shot.project_id)
+            )
         return shot
 
 
