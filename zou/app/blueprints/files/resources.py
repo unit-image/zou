@@ -390,7 +390,11 @@ class LastWorkingFilesResource(Resource):
         task = tasks_service.get_task(task_id)
         user_service.check_project_access(task["project_id"])
         user_service.check_entity_access(task["entity_id"])
-        result = files_service.get_last_working_files_for_task(task["id"])
+        relations = request.args.get("relations", "false").lower() == "true"
+        result = files_service.get_last_working_files_for_task(
+            task["id"],
+            relations=relations,
+        )
 
         return result
 
