@@ -127,7 +127,7 @@ def get_or_create_software(name, short_name, file_extension):
     )
 
 
-def get_last_working_files_for_task(task_id):
+def get_last_working_files_for_task(task_id, relations=False):
     """
     Get last revisions for given task grouped by file name.
     """
@@ -153,7 +153,7 @@ def get_last_working_files_for_task(task_id):
     )
 
     # query
-    working_files = fields.serialize_models(query.all())
+    working_files = fields.serialize_models(query.all(), relations=relations)
 
     # group by name
     working_files_by_name = {
