@@ -1,4 +1,5 @@
 import uuid
+import traceback
 
 from flask import request, jsonify, abort
 from flask_restful import Resource, reqparse, current_app
@@ -272,6 +273,7 @@ class LoginResource(Resource):
                     "error": True,
                     "login": False,
                     "message": "Database doesn't seem reachable.",
+                    "stacktrace": traceback.format_exc(),
                 },
                 500,
             )
@@ -281,7 +283,12 @@ class LoginResource(Resource):
                 message = exception.message
             else:
                 message = str(exception)
-            return {"error": True, "login": False, "message": message}, 500
+            return {
+                "error": True,
+                "login": False,
+                "message": message,
+                "stacktrace": traceback.format_exc(),
+            }, 500
 
     def get_arguments(self):
         parser = reqparse.RequestParser()
