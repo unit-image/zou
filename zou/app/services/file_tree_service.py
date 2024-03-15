@@ -619,18 +619,21 @@ def get_folder_from_sequence(entity):
 
 
 def get_folder_from_episode(entity):
-    if shots_service.is_shot(entity) or shots_service.is_scene(entity):
-        sequence = shots_service.get_sequence_from_shot(entity)
-    elif shots_service.is_sequence(entity):
-        sequence = entity
+    if shots_service.is_episode(entity):
+        return entity['name']
+    else:
+        if shots_service.is_shot(entity) or shots_service.is_scene(entity):
+            sequence = shots_service.get_sequence_from_shot(entity)
+        elif shots_service.is_sequence(entity):
+            sequence = entity
 
-    try:
-        episode = shots_service.get_episode_from_sequence(sequence)
-        episode_name = episode["name"]
-    except:
-        episode_name = "e001"
+        try:
+            episode = shots_service.get_episode_from_sequence(sequence)
+            episode_name = episode["name"]
+        except:
+            episode_name = "e001"
 
-    return episode_name
+        return episode_name
 
 
 def get_folder_from_temporal_entity(entity):
