@@ -1,6 +1,7 @@
 import os
 import datetime
 
+from sqlalchemy.pool import NullPool
 from zou.app.utils import dbhelpers
 
 PROPAGATE_EXCEPTIONS = True
@@ -44,8 +45,7 @@ DATABASE = {
 SQLALCHEMY_DATABASE_URI = str(dbhelpers.get_db_uri())
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_ENGINE_OPTIONS = {
-    "pool_size": int(os.getenv("DB_POOL_SIZE", 30)),
-    "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", 60)),
+    'poolclass': NullPool,
 }
 
 NB_RECORDS_PER_PAGE = 100
