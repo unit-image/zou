@@ -49,7 +49,7 @@ SQLALCHEMY_ENGINE_OPTIONS = {
     "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", 10)),
     "pool_use_lifo": True,
     "pool_pre_ping": True,
-    "pool_timeout": 60,
+    "pool_timeout": 180,
 }
 
 NB_RECORDS_PER_PAGE = 100
