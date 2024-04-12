@@ -43,6 +43,15 @@ DATABASE = {
     "database": os.getenv("DB_DATABASE", "zoudb"),
 }
 SQLALCHEMY_DATABASE_URI = str(dbhelpers.get_db_uri()) + f"?application_name={APP_NAME.lower()}"
+collectd_host_ipv4 = os.getenv("COLLECTD_HOST_IPV4")
+collectd_host_port = os.getenv("COLLECTD_SQLALCHEMY_PORT")
+if collectd_host_ipv4:
+    SQLALCHEMY_DATABASE_URI += (
+        "&plugin=collectd"
+        f"&collectd_host={collectd_host_ipv4}"
+        f"&collectd_port={collectd_host_port}"
+        f"&collectd_program_name={APP_NAME.lower()}"
+    )
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_ENGINE_OPTIONS = {
     "pool_size": int(os.getenv("DB_POOL_SIZE", 80)),
