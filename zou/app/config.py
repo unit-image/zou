@@ -8,7 +8,7 @@ PROPAGATE_EXCEPTIONS = True
 RESTFUL_JSON = {"ensure_ascii": False}
 DEBUG = os.getenv("DEBUG", 0)
 
-APP_NAME = "Zou"
+APP_NAME = os.getenv("APPLICATION_NAME", "Zou")
 APP_SYSTEM_ERROR_SUBJECT_LINE = "%s system error" % APP_NAME
 SECRET_KEY = os.getenv("SECRET_KEY", "mysecretkey")
 
@@ -42,7 +42,7 @@ DATABASE = {
     "password": os.getenv("DB_PASSWORD", "mysecretpassword"),
     "database": os.getenv("DB_DATABASE", "zoudb"),
 }
-SQLALCHEMY_DATABASE_URI = str(dbhelpers.get_db_uri())
+SQLALCHEMY_DATABASE_URI = str(dbhelpers.get_db_uri()) + f"?application_name={APP_NAME.lower()}"
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_ENGINE_OPTIONS = {
     "pool_size": int(os.getenv("DB_POOL_SIZE", 80)),
