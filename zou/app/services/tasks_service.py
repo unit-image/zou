@@ -1214,7 +1214,13 @@ def task_to_review(
     return task_dict_after
 
 
-def add_preview_file_to_comment(comment_id, person_id, task_id, revision=0):
+def add_preview_file_to_comment(
+        comment_id,
+        person_id,
+        task_id,
+        revision=0,
+        event_extra_data=None
+    ):
     """
     Add a preview to comment preview list. Auto set the revision field
     (add 1 if it's a new preview, keep the preview revision in other cases).
@@ -1234,12 +1240,16 @@ def add_preview_file_to_comment(comment_id, person_id, task_id, revision=0):
     preview_file = files_service.create_preview_file_raw(
         str(uuid.uuid4())[:13], revision, task_id, person_id, position=position
     )
+    event_extra_data = event_extra_data or {}
+    data = {
+        "preview_file_id": preview_file.id,
+        "comment_id": comment_id,
+    }
+    if event_extra_data:
+        data["extra"] = event_extra_data
     events.emit(
         "preview-file:new",
-        {
-            "preview_file_id": preview_file.id,
-            "comment_id": comment_id,
-        },
+        data,
         project_id=project_id
     )
     comment.previews.append(preview_file)

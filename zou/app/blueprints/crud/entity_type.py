@@ -12,8 +12,11 @@ class EntityTypesResource(BaseModelsResource):
     def check_read_permissions(self):
         return True
 
-    def emit_create_event(self, instance_dict):
-        events.emit("asset-type:new", {"asset_type_id": instance_dict["id"]})
+    def emit_create_event(self, instance_dict, extra_data=None):
+        data = {"asset_type_id": instance_dict["id"]}
+        if extra_data:
+            data["extra"] = extra_data
+        events.emit("asset-type:new", data)
 
     def post_creation(self, instance):
         assets_service.clear_asset_type_cache()

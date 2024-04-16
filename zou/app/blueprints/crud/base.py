@@ -15,7 +15,11 @@ from zou.app.services.exception import (
 )
 
 
+EVENT_EXTRA_DATA_KEY = "event_extra_data"
+
+
 class BaseModelsResource(Resource):
+
     def __init__(self, model):
         Resource.__init__(self)
         self.model = model
@@ -189,11 +193,15 @@ class BaseModelsResource(Resource):
                     "Data are empty. Please verify that you sent JSON data and "
                     "that you set the right headers."
                 )
+            event_extra_data = data.pop(EVENT_EXTRA_DATA_KEY, {})
             self.check_create_permissions(data)
             data = self.update_data(data)
             instance = self.model.create(**data)
             instance_dict = self.post_creation(instance)
-            self.emit_create_event(instance_dict)
+            self.emit_create_event(
+                instance_dict,
+                event_extra_data,
+            )
             return instance_dict, 201
 
         except TypeError as exception:
@@ -212,11 +220,14 @@ class BaseModelsResource(Resource):
             current_app.logger.error(str(exception), exc_info=1)
             return {"message": str(exception)}, 400
 
-    def emit_create_event(self, instance_dict):
+    def emit_create_event(self, instance_dict, extra_data=None):
+        data = {"%s_id" % self.model.__tablename__: instance_dict["id"]}
+        if extra_data:
+            data["extra"] = extra_data
         return events.emit(
             "%s:new" % self.model.__tablename__.replace("_", "-"),
-            {"%s_id" % self.model.__tablename__: instance_dict["id"]},
-            project_id=instance_dict.get("project_id", None)
+            data,
+            project_id=instance_dict.get("project_id", None),
         )
 
 
