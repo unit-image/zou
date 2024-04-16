@@ -22,7 +22,7 @@ from .base import BaseModelResource, BaseModelsResource
 
 class EntityEventMixin(object):
 
-    def emit_event(self, event_name, entity_dict):
+    def emit_event(self, event_name, entity_dict, extra_data=None):
         instance_id = entity_dict["id"]
         type_name = shots_service.get_base_entity_type_name(entity_dict)
         if event_name in ["update", "delete"]:
@@ -30,11 +30,12 @@ class EntityEventMixin(object):
                 shots_service.clear_shot_cache(instance_id)
             if type_name == "asset":
                 assets_service.clear_asset_cache(instance_id)
+        data = {"%s_id" % type_name.lower(): instance_id}
+        if extra_data:
+            data["extra"] = extra_data
         events.emit(
             "%s:%s" % (type_name.lower(), event_name),
-            {
-                "%s_id" % type_name.lower(): instance_id
-            },
+            data,
             project_id=entity_dict["project_id"]
         )
 
@@ -46,8 +47,8 @@ class EntitiesResource(BaseModelsResource, EntityEventMixin):
     def check_create_permissions(self, entity):
         user_service.check_manager_project_access(entity["project_id"])
 
-    def emit_create_event(self, entity_dict):
-        self.emit_event("new", entity_dict)
+    def emit_create_event(self, entity_dict, extra_data=None):
+        self.emit_event("new", entity_dict, extra_data=extra_data)
 
     def all_entries(self, query=None, relations=False):
         entities = BaseModelsResource.all_entries(

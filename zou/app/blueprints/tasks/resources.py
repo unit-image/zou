@@ -4,6 +4,8 @@ from flask import abort, request
 from flask_restful import Resource, reqparse
 from flask_jwt_extended import jwt_required
 
+from zou.app.blueprints.crud.base import EVENT_EXTRA_DATA_KEY
+
 from zou.app.services.exception import (
     TaskNotFoundException,
     PersonNotFoundException,
@@ -35,6 +37,7 @@ class AddPreviewResource(Resource):
 
     @jwt_required
     def post(self, task_id, comment_id):
+        event_extra_data = request.json.get(EVENT_EXTRA_DATA_KEY)
         task = tasks_service.get_task(task_id)
         user_service.check_project_access(task["project_id"])
         user_service.check_entity_access(task["entity_id"])
@@ -43,7 +46,10 @@ class AddPreviewResource(Resource):
         tasks_service.get_task_status(comment["task_status_id"])
         person = persons_service.get_current_user()
         preview_file = tasks_service.add_preview_file_to_comment(
-            comment_id, person["id"], task_id
+            comment_id,
+            person["id"],
+            task_id,
+            event_extra_data=event_extra_data,
         )
         return preview_file, 201
 
