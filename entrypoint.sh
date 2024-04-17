@@ -4,9 +4,16 @@ while ! nc -z $DB_HOST $DB_PORT; do
     sleep 1;
 done
 
+retry_counter=0
 while ! nc -zu $COLLECTD_HOST $COLLECTD_SQLALCHEMY_PORT; do
-    echo Waiting for collectd sqlalchemy plugin to start...;
-    sleep 1;
+    if [ $retry_counter -ge 10 ]; then
+        echo "$COLLECTD_HOST:$COLLECTD_SQLALCHEMY_PORT not reachable, giving up"
+        break
+    else
+        echo Waiting for collectd sqlalchemy plugin to start... Retry count: $retry_counter;
+        retry_counter=$((retry_counter+1))
+        sleep 1;
+    fi
 done
 export COLLECTD_HOST_IPV4=$(getent hosts collectd | awk '{ print $1 }')
 
