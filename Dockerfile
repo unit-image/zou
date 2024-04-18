@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install --yes \
     curl \
     ffmpeg \
     netcat \
+    dnsutils \
     postgresql-client
 
 # Install external dependencies
