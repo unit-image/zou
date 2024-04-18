@@ -5,17 +5,15 @@ while ! nc -z $DB_HOST $DB_PORT; do
 done
 
 retry_counter=0
-while ! nc -zu $COLLECTD_HOST $COLLECTD_SQLALCHEMY_PORT; do
-    if [ $retry_counter -ge 10 ]; then
-        echo "$COLLECTD_HOST:$COLLECTD_SQLALCHEMY_PORT not reachable, giving up"
-        break
-    else
+COLLECTD_HOST_IPV4=""
+while  [ ! $COLLECTD_HOST_IPV4 ] && [ $retry_counter -le 5 ] ; do
+    COLLECTD_HOST_IPV4=$(nslookup -retry=0 -timeout=1 collectd | awk '/^Name:/ {N=$2} ; /^Address:/ {A=$2} ; END {print A}')
+    if [ ! $COLLECTD_HOST_IPV4 ]; then
         echo Waiting for collectd sqlalchemy plugin to start... Retry count: $retry_counter;
         retry_counter=$((retry_counter+1))
-        sleep 1;
     fi
 done
-export COLLECTD_HOST_IPV4=$(getent hosts collectd | awk '{ print $1 }')
+export COLLECTD_HOST_IPV4=$COLLECTD_HOST_IPV4
 
 if [ ! -z "$ALEMBIC_REVISION" ]; then
     cd /opt/zou/zou/migrations
