@@ -1,6 +1,7 @@
 import copy
 
-from flask import current_app
+from flask import current_app, request
+from flask_restful import Resource
 from flask_jwt_extended import jwt_required
 
 from sqlalchemy.exc import IntegrityError, StatementError
@@ -9,15 +10,36 @@ from zou.app.models.entity import Entity, EntityVersion
 from zou.app.models.subscription import Subscription
 from zou.app.services import (
     assets_service,
+    entities_service,
     persons_service,
     shots_service,
     user_service
 )
-from zou.app.utils import events, fields, date_helpers
-
+from zou.app.utils import (
+    events,
+    fields,
+    date_helpers,
+    permissions,
+    query,
+)
 from werkzeug.exceptions import NotFound
 
 from .base import BaseModelResource, BaseModelsResource
+
+
+class AllEntitiesResource(Resource):
+    @jwt_required
+    def get(self):
+        """
+        Retrieve all entities.
+        """
+        criterions = query.get_query_criterions_from_request(request)
+        project_id = criterions.get("project_id")
+        if project_id:
+            user_service.check_project_access(project_id)
+        if not permissions.has_admin_permissions():
+            criterions["assigned_to"] = persons_service.get_current_user()["id"]
+        return entities_service.get_entities(criterions)
 
 
 class EntityEventMixin(object):

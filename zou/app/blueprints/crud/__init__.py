@@ -7,7 +7,7 @@ from .attachment_file import AttachmentFilesResource, AttachmentFileResource
 from .comments import CommentsResource, CommentResource
 from .custom_action import CustomActionsResource, CustomActionResource
 from .department import DepartmentsResource, DepartmentResource
-from .entity import EntityResource, EntitiesResource
+from .entity import EntityResource, EntitiesResource, AllEntitiesResource
 from .entity_status import EntityStatusesResource, EntityStatusResource
 from .entity_type import EntityTypesResource, EntityTypeResource
 from .entity_link import EntityLinksResource, EntityLinkResource
@@ -51,6 +51,7 @@ routes = [
     ("/data/entity-types", EntityTypesResource),
     ("/data/entity-types/<instance_id>", EntityTypeResource),
     ("/data/entities", EntitiesResource),
+    ("/data/entities/all", AllEntitiesResource),
     ("/data/entities/<instance_id>", EntityResource),
     ("/data/task-types", TaskTypesResource),
     ("/data/task-types/<instance_id>", TaskTypeResource),

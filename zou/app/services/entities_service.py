@@ -4,8 +4,12 @@ from zou.app.utils import cache, events, fields
 from zou.app.models.entity import Entity, EntityLink
 from zou.app.models.entity_type import EntityType
 from zou.app.models.preview_file import PreviewFile
+from zou.app.models.project import ProjectPersonLink
 from zou.app.models.task import assignees_table
 from zou.app.models.task import Task
+from zou.app.utils import query as query_utils
+
+from zou.app.services import persons_service
 
 from zou.app.services.exception import (
     PreviewFileNotFoundException,
@@ -63,6 +67,23 @@ def get_entity(entity_id):
     return base_service.get_instance(
         Entity, entity_id, EntityNotFoundException
     ).serialize()
+
+
+def get_entities(criterions={}):
+    """
+    Get all entities for given criterions.
+    """
+    assigned_to_in_criterions = "assigned_to" in criterions
+    if assigned_to_in_criterions:
+        del criterions["assigned_to"]
+    query = Entity.query
+    query = query_utils.apply_criterions_to_db_query(Entity, query, criterions)
+    if assigned_to_in_criterions:
+        query = query.join(ProjectPersonLink, ProjectPersonLink.project_id == Entity.project_id)
+        current_user = persons_service.get_current_user_raw()
+        query = query.filter(ProjectPersonLink.person_id == current_user.id)
+    result = query.all()
+    return EntityType.serialize_list(result, obj_type="Entity")
 
 
 def update_entity_preview(entity_id, preview_file_id):
