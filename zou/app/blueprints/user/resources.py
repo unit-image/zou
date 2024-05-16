@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 
 from flask import request, abort
@@ -188,6 +190,18 @@ class SequenceTasksResource(Resource):
     def get(self, sequence_id):
         shots_service.get_sequence(sequence_id)
         return user_service.get_tasks_for_entity(sequence_id)
+
+
+class AssignedResource(Resource):
+    """
+    Return tasks, from active projects, assigned to current user.
+    """
+
+    @jwt_required
+    def get(self):
+        max_update_age: int | None = request.args.get("max_update_age", None)
+
+        return user_service.get_assigned_tasks(max_update_age=max_update_age)
 
 
 class TodosResource(Resource):

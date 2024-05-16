@@ -9,6 +9,7 @@ from .resources import (
     TaskAssignResource,
     TasksAssignResource,
     ClearAssignationResource,
+    PersonAssignedTasksResource,
     PersonTasksResource,
     PersonDoneTasksResource,
     TaskStartResource,
@@ -31,7 +32,6 @@ from .resources import (
     VisibilityType
 )
 
-
 routes = [
     ("/data/tasks/<task_id>/comments", TaskCommentsResource),
     ("/data/tasks/<task_id>/comments/<comment_id>", TaskCommentResource),
@@ -39,6 +39,7 @@ routes = [
     ("/data/tasks/<task_id>/full", TaskFullResource),
     ("/data/tasks/visibility-types/<instance_id>", VisibilityType),
     ("/data/persons/<person_id>/tasks", PersonTasksResource),
+    ("/data/persons/<person_id>/assigned-tasks", PersonAssignedTasksResource),
     ("/data/persons/<person_id>/done-tasks", PersonDoneTasksResource),
     (
         "/data/entities/<entity_id>/task-types/<task_type_id>/tasks",
