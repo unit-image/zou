@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy.orm import aliased
 
 from zou.app.models.comment import Comment
@@ -90,6 +92,16 @@ def related_projects():
         .all()
     )
     return Project.serialize_list(projects)
+
+
+def get_assigned_tasks(max_update_age: int | None = None):
+    """
+    Get all tasks, from active projects, assigned to current user.
+
+    :param max_update_age: Max day count since tasks were last updated. If not given, return all tasks.
+    """
+    current_user = persons_service.get_current_user()
+    return tasks_service.get_person_assigned_tasks(current_user["id"], max_update_age=max_update_age)
 
 
 def get_todos():

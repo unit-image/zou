@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 
 from flask import abort, request
@@ -153,6 +155,24 @@ class TaskCommentResource(Resource):
         tasks_service.clear_comment_cache(comment_id)
         self.post_delete(comment)
         return "", 204
+
+
+class PersonAssignedTasksResource(Resource):
+    """
+    Return tasks, from active projects, assigned to given user.
+    """
+
+    @jwt_required
+    def get(self, person_id):
+
+        if permissions.has_vendor_permissions():
+            person = persons_service.get(person_id)
+            if person["role"] == "vendor":
+                return []
+
+        max_update_age: int | None = request.args.get("max_update_age", None)
+
+        return tasks_service.get_person_assigned_tasks(person_id, max_update_age=max_update_age)
 
 
 class PersonTasksResource(Resource):

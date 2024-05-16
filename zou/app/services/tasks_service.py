@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import collections
 import datetime
 import uuid
+from typing import Any
 
 from sqlalchemy.exc import StatementError, IntegrityError, DataError
 from sqlalchemy.orm import aliased
@@ -22,9 +25,10 @@ from zou.app.models.news import News
 from zou.app.models.person import Person
 from zou.app.models.preview_file import PreviewFile
 from zou.app.models.project import Project
+from zou.app.models.project_status import ProjectStatus
 from zou.app.models.task import Task, VisibilityType
-from zou.app.models.task_type import TaskType
 from zou.app.models.task_status import TaskStatus
+from zou.app.models.task_type import TaskType
 from zou.app.models.time_spent import TimeSpent, TimeSpentStatus
 
 from zou.app.utils import cache, fields, query as query_utils
@@ -674,6 +678,59 @@ def get_person_done_tasks(person_id, projects):
     """
     return get_person_tasks(person_id, projects, is_done=True)
 
+
+def get_person_assigned_tasks(person_id: str, max_update_age: int | None = None) -> list[dict[str, Any]]:
+    """
+    Retrieve all tasks, from active projects, for given person.
+
+    :param max_update_age: Max day count since tasks were last updated. If not given, return all tasks.
+    """
+    person = Person.get(person_id)
+
+    query = (
+        Task.query.join(Project, TaskType, TaskStatus)
+        .join(ProjectStatus, ProjectStatus.id == Project.project_status_id)
+        .join(Entity, Entity.id == Task.entity_id)
+        .filter(Project.team.contains(person))
+        .filter(Task.assignees.contains(person))
+        .filter(ProjectStatus.name.in_(('Active', 'Open')))
+        .order_by(Task.updated_at.desc())
+        .add_columns(
+            Project.name,
+            Entity.name,
+            TaskType.name,
+            TaskStatus.name,
+            TaskStatus.short_name,
+        )
+    )
+
+    if max_update_age is not None:
+        if int(max_update_age) <= 0:
+            raise ValueError("max_update_age must be greater than 0.")
+
+        oldest_date = datetime.datetime.now() - datetime.timedelta(days=int(max_update_age))
+        query = query.filter(Task.updated_at > oldest_date)
+
+    tasks = []
+    for (task,
+         project_name,
+         entity_name,
+         task_type_name,
+         task_status_name,
+         task_status_short_name
+         ) in query.all():
+        task_data = task.serialize()
+        task_data.update(
+            {
+                "project_name": project_name,
+                "entity_name": entity_name,
+                "task_type_name": task_type_name,
+                "task_status_name": task_status_name,
+                "task_status_short_name": task_status_short_name,
+            }
+        )
+        tasks.append(task_data)
+    return tasks
 
 def get_person_tasks(person_id, projects, is_done=None):
     """
