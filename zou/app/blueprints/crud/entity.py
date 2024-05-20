@@ -39,7 +39,13 @@ class AllEntitiesResource(Resource):
             user_service.check_project_access(project_id)
         if not permissions.has_admin_permissions():
             criterions["assigned_to"] = persons_service.get_current_user()["id"]
-        return entities_service.get_entities(criterions)
+        entities = entities_service.get_entities(criterions)
+
+        # Be specific regarding type instead of using `entity`
+        for entity in entities:
+            entity["type"] = shots_service.get_base_entity_type_name(entity)
+
+        return entities
 
 
 class EntityEventMixin(object):
