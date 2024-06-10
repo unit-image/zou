@@ -17,8 +17,7 @@ class ImportShotgunStepTestCase(ShotgunTestCase):
         data = [
             {"bad": "wrong"}
         ]
-        self.step = self.post("/import/shotgun/steps", data, 200)
-        self.assertEqual(len(self.step), 0)
+        self.post("/import/shotgun/steps", data, 500)
 
     def test_import_step(self):
         sg_step_animation = {

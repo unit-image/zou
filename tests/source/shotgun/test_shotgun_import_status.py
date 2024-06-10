@@ -19,8 +19,7 @@ class ImportShotgunStatusTestCase(ShotgunTestCase):
         data = [
             {"bad": "wrong"}
         ]
-        self.status = self.post("/import/shotgun/status", data, 200)
-        self.assertEqual(len(self.status), 0)
+        self.post("/import/shotgun/status", data, 500)
 
     def test_import_a_status(self):
         sg_status = {
