@@ -78,9 +78,12 @@ class ImportShotgunTasksResource(BaseImportShotgunResource):
         assignees = []
         if len(sg_task["task_assignees"]) > 0:
             for sg_person in sg_task["task_assignees"]:
-                person_id = person_ids[sg_person["id"]]
-                person = Person.get(person_id)
-                assignees.append(person)
+                try:
+                    person_id = person_ids[sg_person["id"]]
+                    person = Person.get(person_id)
+                    assignees.append(person)
+                except KeyError:
+                    continue
         return assignees
 
     def import_entry(self, data):
