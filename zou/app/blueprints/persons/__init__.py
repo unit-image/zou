@@ -9,6 +9,7 @@ from .resources import (
     PersonMonthAllTimeSpentsResource,
     PersonWeekTimeSpentsResource,
     PersonDayTimeSpentsResource,
+    PersonDepartmentsResource,
     PresenceLogsResource,
     TimeSpentsResource,
     DateTimeSpentsResource,
@@ -23,6 +24,7 @@ from .resources import (
 
 routes = [
     ("/data/persons/new", NewPersonResource),
+    ("/data/persons/<person_id>/departments", PersonDepartmentsResource),
     ("/data/persons/<person_id>/desktop-login-logs", DesktopLoginsResource),
     ("/data/persons/presence-logs/<month_date>", PresenceLogsResource),
 
