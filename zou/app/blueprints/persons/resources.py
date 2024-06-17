@@ -61,6 +61,22 @@ class NewPersonResource(Resource):
         return args
 
 
+class PersonDepartmentsResource(Resource):
+    """
+    Allow to get the departments for a given person.
+    People without at least manager permissions can only request their own departments.
+    """
+
+    @jwt_required
+    def get(self, person_id):
+        current_user = persons_service.get_current_user()
+        if current_user["id"] != person_id and not permissions.has_manager_permissions():
+            raise permissions.PermissionDenied
+
+        person = persons_service.get_person_raw(person_id)
+        return fields.serialize_list(person.skills)
+
+
 class DesktopLoginsResource(Resource):
     """
     Allow to create and retrieve desktop login logs. Desktop login logs can only
