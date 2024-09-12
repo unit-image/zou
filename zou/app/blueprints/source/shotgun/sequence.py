@@ -86,6 +86,8 @@ class ImportShotgunSequencesResource(BaseImportShotgunResource):
                     {
                         "description": data["description"],
                         "shotgun_id": data["shotgun_id"],
+                        "entity_status_id": data["entity_status_id"],
+                        "data": data["data"],
                     }
                 )
                 sequence.save()
